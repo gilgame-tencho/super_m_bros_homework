@@ -9,12 +9,15 @@ const canvBK = $('#canvas-back')[0];
 const cotxBK = canvBK.getContext('2d');
 
 const images = {};
-images.player = $('#player-image')[0];
+images.player = {
+    r: $('#img-player-r')[0],
+    l: $('#img-player-l')[0],
+}
 images.bg = {
-    feald: $('#map')[0],
+    feald: $('#img-map')[0],
 }
 images.block = {
-    hard: $('#hard-block')[0],
+    hard: $('#img-hard-block')[0],
 }
 
 function gameStart(){
@@ -111,7 +114,8 @@ socket.on('state', function(ccdm) {
         // debug_show_object_line(cotxMD, block);
     });
     Object.values(ccdm.players).forEach((player) => {
-        drawImage(cotxMD, images.player, player);
+        let img = images.player[player.direction];
+        drawImage(cotxMD, img, player);
         // debug_show_object_line(cotxMD, player);
 
         if(player.socketId === socket.id){

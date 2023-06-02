@@ -169,7 +169,7 @@ class Player extends GameObject{
         this.x = BLK * 2;
         this.y = FIELD_HEIGHT * 0.5 - this.height;
         this.angle = 0;
-        this.direction = 0;  // direction is right:0, left:1;
+        this.direction = 'r';  // direction is right:r, left:l;
         this.gravity_timer = setInterval(()=>{
             this.fall(server_conf.move_score);
         }, 1000/FPS);
@@ -249,10 +249,12 @@ const interval_game = () => {
         }
         if(movement.left){
             player.angle = Math.PI * 1;
+            player.direction = 'l';
             player.move(server_conf.move_score);
         }
         if(movement.right){
             player.angle = Math.PI * 0;
+            player.direction = 'r';
             player.move(server_conf.move_score);
         }
         if(movement.up){
