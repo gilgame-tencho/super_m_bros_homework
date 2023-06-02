@@ -65,7 +65,7 @@ function view_reset_front(){
     cotxFT.rect(0, 0, canvFT.width, canvFT.height);
     cotxFT.stroke();
 }
-function view_reset_midde(){
+function view_reset_middle(){
     cotxMD.clearRect(0, 0, canvMD.width, canvMD.height);
 }
 function view_reset_background(){

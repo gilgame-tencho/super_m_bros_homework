@@ -5,8 +5,9 @@ apl_db: 3001
 loglevel: debug
 debug_process: false
 
-FIELD_WIDTH: 1500
-FIELD_HEIGHT: 1000
+FIELD_WIDTH: 256
+FIELD_HEIGHT: 240
 
 # Game base config
 FPS: 30
+move_score: 10

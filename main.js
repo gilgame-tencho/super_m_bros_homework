@@ -197,18 +197,18 @@ setInterval(() => {
     Object.values(ccdm.players).forEach((player) => {
         const movement = player.movement;
         if(movement.forward){
-            player.move(move_score);
+            player.move(server_conf.move_score);
         }
         if(movement.back){
-            player.move(-move_score);
+            player.move(-server_conf.move_score);
         }
         if(movement.left){
             player.angle = Math.PI * 1;
-            player.move(move_score);
+            player.move(server_conf.move_score);
         }
         if(movement.right){
             player.angle = Math.PI * 0;
-            player.move(move_score);
+            player.move(server_conf.move_score);
         }
         if(movement.up){
         }
