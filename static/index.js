@@ -9,9 +9,15 @@ const canvBK = $('#canvas-back')[0];
 const cotxBK = canvBK.getContext('2d');
 
 const images = {};
-images.player = $('#player-image')[0];
+images.player = {
+    r: $('#img-player-r')[0],
+    l: $('#img-player-l')[0],
+}
 images.bg = {
-    feald: $('#map')[0],
+    feald: $('#img-map')[0],
+}
+images.block = {
+    hard: $('#img-hard-block')[0],
 }
 
 function gameStart(){
@@ -19,6 +25,7 @@ function gameStart(){
     $("#start-screen").hide();
 }
 $("#start-button").on('click', gameStart);
+gameStart();
 
 let movement = {};
 $(document).on('keydown keyup', (event) => {
@@ -36,6 +43,9 @@ $(document).on('keydown keyup', (event) => {
             movement[command] = false;
         }
         socket.emit('movement', movement);
+    }
+    if(event.key === ' ' && event.type === 'keydown'){
+        socket.emit('jamp');
     }
 });
 
@@ -60,7 +70,7 @@ function drawImage(ctt, img, px, py=null, pw=null, ph=null){
 
 function view_reset_front(){
     cotxFT.clearRect(0, 0, canvFT.width, canvFT.height);
-    cotxFT.lineWidth = 10;
+    cotxFT.lineWidth = 1;
     cotxFT.beginPath();
     cotxFT.rect(0, 0, canvFT.width, canvFT.height);
     cotxFT.stroke();
@@ -76,6 +86,15 @@ function view_reset_all(){
     view_reset_front();
     view_reset_middle();
     view_reset_background();
+}
+function debug_show_object_line(cotx, obj){
+    cotx.save();
+    cotx.lineWidth = 1;
+    cotx.strokeStyle = "#00aa00";
+    cotx.beginPath();
+    cotx.rect(obj.x, obj.y, obj.width, obj.height);
+    cotx.stroke();
+    cotx.restore();
 }
 
 // init -----
@@ -93,10 +112,14 @@ socket.on('menu-frame', function(ccdm) {
 socket.on('state', function(ccdm) {
     view_reset_middle();
 
+    Object.values(ccdm.blocks).forEach((block) => {
+        drawImage(cotxMD, images.block.hard, block);
+        // debug_show_object_line(cotxMD, block);
+    });
     Object.values(ccdm.players).forEach((player) => {
-        cotxMD.save();
-        drawImage(cotxMD, images.player, player);
-        cotxMD.restore();
+        let img = images.player[player.direction];
+        drawImage(cotxMD, img, player);
+        // debug_show_object_line(cotxMD, player);
 
         if(player.socketId === socket.id){
             cotxMD.save();

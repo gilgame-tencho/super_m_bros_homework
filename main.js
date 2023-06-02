@@ -20,6 +20,7 @@ const SERVER_NAME = 'main';
 const FIELD_WIDTH = server_conf.FIELD_WIDTH;
 const FIELD_HEIGHT = server_conf.FIELD_HEIGHT;
 const FPS = server_conf.FPS;
+const BLK = server_conf.BLOCK;
 
 const logger = STANDERD.logger({
     server_name: SERVER_NAME,
@@ -42,10 +43,12 @@ class CCDM extends ClientCommonDataManager{
     constructor(obj={}){
         super(obj);
         this.players = {};
+        this.blocks = {};
     }
     toJSON(){
         return Object.assign(super.toJSON(), {
             players: this.players,
+            blocks: this.blocks,
         });
     }
 }
@@ -103,26 +106,53 @@ class GameObject extends PhysicsObject{
         this.angle = obj.angle;
         this.direction = obj.direction;
     }
+    collistion(oldX, oldY){
+        let collision = false;
+        if(this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
+            collision = true;
+        }
+        if(this.intersectBlock()){
+            collision = true;
+        }
+        if(collision){
+            this.x = oldX; this.y = oldY;
+        }
+        return collision;
+    }
     move(distance){
         const oldX = this.x, oldY = this.y;
 
         this.x += distance * Math.cos(this.angle);
         this.y += distance * Math.sin(this.angle);
 
-        let collision = false;
-        if(this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
-            collision = true;
-        }
-        if(collision){
-            this.x = oldX; this.y = oldY;
-        }
-        return !collision;
+        return !this.collistion(oldX, oldY);
+    }
+    fall(distance){
+        const oldX = this.x, oldY = this.y;
+
+        this.y += distance;
+
+        return !this.collistion(oldX, oldY);
+    }
+    rise(distance){
+        const oldX = this.x, oldY = this.y;
+
+        this.y -= distance;
+
+        return !this.collistion(oldX, oldY);
     }
     intersect(obj){
-        return (this.x <= obj.x + obj.width) &&
-            (this.x + this.width >= obj.x) &&
-            (this.y <= obj.y + obj.height) &&
-            (this.y + this.height >= obj.y);
+        return (this.x < obj.x + obj.width) &&
+            (this.x + this.width > obj.x) &&
+            (this.y < obj.y + obj.height) &&
+            (this.y + this.height > obj.y);
+    }
+    intersectBlock(){
+        return Object.keys(ccdm.blocks).some((id)=>{
+            if(this.intersect(ccdm.blocks[id])){
+                return true;
+            }
+        });
     }
     toJSON(){
         return Object.assign(super.toJSON(), {
@@ -141,12 +171,42 @@ class Player extends GameObject{
 
         this.movement = {};
 
-        this.width = 16;
-        this.height = 16;
-        this.x = FIELD_WIDTH * 0.5 - this.width;
+        this.width = BLK;
+        this.height = BLK;
+        this.x = BLK * 2;
         this.y = FIELD_HEIGHT * 0.5 - this.height;
         this.angle = 0;
-        this.direction = 0;  // direction is right:0, left:1;
+        this.direction = 'r';  // direction is right:r, left:l;
+        this.jampping = 0;
+        this.flg_fly = true;
+
+        this.gravity_func = ()=>{
+            this.fall(server_conf.fall_speed);
+        }
+        this.gravity_timer = setInterval(this.gravity_func, 1000/FPS);
+    }
+    fall(distance){
+        this.flg_fly = super.fall(distance);
+        return this.flg_fly;
+    }
+    jump(){
+        if(this.jampping > 0 || this.flg_fly){ return }
+
+        this.flg_fly = true;
+        this.jampping = server_conf.jamp_power * BLK;
+        clearInterval(this.gravity_timer);
+        this.jampping_timer = setInterval(()=>{
+            if(this.rise(server_conf.jamp_speed)){
+                this.jampping -= server_conf.jamp_speed;
+            }else{
+                this.jampping = 0;
+            }
+            if(this.jampping <= 0){
+                this.jampping = 0;
+                this.gravity_timer = setInterval(this.gravity_func, 1000/FPS);
+                clearInterval(this.jampping_timer);
+            }
+        }, 1000/FPS);
     }
     remove(){
         delete players[this.id];
@@ -161,12 +221,30 @@ class Player extends GameObject{
     }
 }
 
+class hardBlock extends PhysicsObject{
+    constructor(obj={}){
+        super(obj);
+    }
+}
+
 // ### ---
 class GameMaster{
     constructor(){
         this.start();
     }
     start(){
+        // ground
+        let param = {
+            x: 0,
+            y: server_conf.FIELD_HEIGHT - BLK * 2,
+            height: BLK * 2,
+            width: BLK * 1,
+        }
+        for(let i=0; i<server_conf.FIELD_WIDTH; i+=BLK){
+            param.x = i;
+            let block = new hardBlock(param);
+            ccdm.blocks[block.id] = block;
+        }
     }
 }
 
@@ -187,6 +265,9 @@ io.on('connection', function(socket) {
         if(!player || player.health===0){return;}
         player.movement = movement;
     });
+    socket.on('jamp', function(){
+        player.jump();
+    });
     socket.on('disconnect', () => {
         if(!player){return;}
         delete ccdm.players[player.id];
@@ -198,18 +279,20 @@ const interval_game = () => {
     Object.values(ccdm.players).forEach((player) => {
         const movement = player.movement;
         if(movement.forward){
-            player.move(server_conf.move_score);
+            player.move(server_conf.move_speed);
         }
         if(movement.back){
-            player.move(-server_conf.move_score);
+            player.move(-server_conf.move_speed);
         }
         if(movement.left){
             player.angle = Math.PI * 1;
-            player.move(server_conf.move_score);
+            player.direction = 'l';
+            player.move(server_conf.move_speed);
         }
         if(movement.right){
             player.angle = Math.PI * 0;
-            player.move(server_conf.move_score);
+            player.direction = 'r';
+            player.move(server_conf.move_speed);
         }
         if(movement.up){
         }
@@ -240,4 +323,6 @@ app.get('/', (request, response) => {
 
 server.listen(server_conf.port, function() {
   logger.info(`Starting server on port ${server_conf.port}`);
+  logger.info(`Server conf`);
+  console.log(server_conf);
 });
