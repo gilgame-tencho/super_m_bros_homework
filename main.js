@@ -5,6 +5,7 @@ const http = require('http');
 const path = require('path');
 const socketIO = require('socket.io');
 const app = express();
+app.set('view engine', 'ejs');
 const server = http.Server(app);
 const io = socketIO(server);
 const fs = require('fs');
@@ -140,8 +141,8 @@ class Player extends GameObject{
 
         this.movement = {};
 
-        this.width = 16 * 2;
-        this.height = 16 * 2;
+        this.width = 16;
+        this.height = 16;
         this.x = FIELD_WIDTH * 0.5 - this.width;
         this.y = FIELD_HEIGHT * 0.5 - this.height;
         this.angle = 0;
@@ -193,7 +194,7 @@ io.on('connection', function(socket) {
     });
 });
 
-setInterval(() => {
+const interval_game = () => {
     Object.values(ccdm.players).forEach((player) => {
         const movement = player.movement;
         if(movement.forward){
@@ -216,13 +217,25 @@ setInterval(() => {
         }
     });
     io.sockets.emit('state', ccdm);
-}, 1000/FPS);
+}
+
+function start_interval_game(){
+    setInterval(interval_game, 1000/FPS);
+}
 
 // Server config. -----------
 app.use('/static', express.static(__dirname + '/static'));
 
+const app_param = {
+    FIELD_HEIGHT: server_conf.FIELD_HEIGHT,
+    FIELD_WIDTH: server_conf.FIELD_WIDTH,
+}
 app.get('/', (request, response) => {
-  response.sendFile(path.join(__dirname, '/static/index.html'));
+    app_param.name = request.param('name');
+    app_param.title = 'bros';
+    start_interval_game();
+    // response.sendFile(path.join(__dirname, '/static/index.html'));
+    response.render(path.join(__dirname, '/static/index.ejs'), app_param);
 });
 
 server.listen(server_conf.port, function() {

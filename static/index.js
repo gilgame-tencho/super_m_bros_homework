@@ -100,8 +100,8 @@ socket.on('state', function(ccdm) {
 
         if(player.socketId === socket.id){
             cotxMD.save();
-            cotxMD.font = '30px Bold Arial';
-            cotxMD.fillText('You', player.x, player.y - 20);
+            cotxMD.font = '8px Bold Arial';
+            cotxMD.fillText('You', player.x + 2, player.y - 5);
             cotxMD.restore();
         }
     });
