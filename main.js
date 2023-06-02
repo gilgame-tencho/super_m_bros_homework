@@ -134,6 +134,13 @@ class GameObject extends PhysicsObject{
 
         return !this.collistion(oldX, oldY);
     }
+    rise(distance){
+        const oldX = this.x, oldY = this.y;
+
+        this.y -= distance;
+
+        return !this.collistion(oldX, oldY);
+    }
     intersect(obj){
         return (this.x < obj.x + obj.width) &&
             (this.x + this.width > obj.x) &&
@@ -170,8 +177,35 @@ class Player extends GameObject{
         this.y = FIELD_HEIGHT * 0.5 - this.height;
         this.angle = 0;
         this.direction = 'r';  // direction is right:r, left:l;
-        this.gravity_timer = setInterval(()=>{
-            this.fall(server_conf.move_score);
+        this.jampping = 0;
+        this.flg_fly = true;
+
+        this.gravity_func = ()=>{
+            this.fall(server_conf.fall_speed);
+        }
+        this.gravity_timer = setInterval(this.gravity_func, 1000/FPS);
+    }
+    fall(distance){
+        this.flg_fly = super.fall(distance);
+        return this.flg_fly;
+    }
+    jump(){
+        if(this.jampping > 0 || this.flg_fly){ return }
+
+        this.flg_fly = true;
+        this.jampping = server_conf.jamp_power * BLK;
+        clearInterval(this.gravity_timer);
+        this.jampping_timer = setInterval(()=>{
+            if(this.rise(server_conf.jamp_speed)){
+                this.jampping -= server_conf.jamp_speed;
+            }else{
+                this.jampping = 0;
+            }
+            if(this.jampping <= 0){
+                this.jampping = 0;
+                this.gravity_timer = setInterval(this.gravity_func, 1000/FPS);
+                clearInterval(this.jampping_timer);
+            }
         }, 1000/FPS);
     }
     remove(){
@@ -231,6 +265,9 @@ io.on('connection', function(socket) {
         if(!player || player.health===0){return;}
         player.movement = movement;
     });
+    socket.on('jamp', function(){
+        player.jump();
+    });
     socket.on('disconnect', () => {
         if(!player){return;}
         delete ccdm.players[player.id];
@@ -242,20 +279,20 @@ const interval_game = () => {
     Object.values(ccdm.players).forEach((player) => {
         const movement = player.movement;
         if(movement.forward){
-            player.move(server_conf.move_score);
+            player.move(server_conf.move_speed);
         }
         if(movement.back){
-            player.move(-server_conf.move_score);
+            player.move(-server_conf.move_speed);
         }
         if(movement.left){
             player.angle = Math.PI * 1;
             player.direction = 'l';
-            player.move(server_conf.move_score);
+            player.move(server_conf.move_speed);
         }
         if(movement.right){
             player.angle = Math.PI * 0;
             player.direction = 'r';
-            player.move(server_conf.move_score);
+            player.move(server_conf.move_speed);
         }
         if(movement.up){
         }

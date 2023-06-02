@@ -44,6 +44,9 @@ $(document).on('keydown keyup', (event) => {
         }
         socket.emit('movement', movement);
     }
+    if(event.key === ' ' && event.type === 'keydown'){
+        socket.emit('jamp');
+    }
 });
 
 function drawImage(ctt, img, px, py=null, pw=null, ph=null){

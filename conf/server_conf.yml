@@ -11,4 +11,7 @@ BLOCK: 16
 
 # Game base config
 FPS: 30
-move_score: 4
+move_speed: 4
+fall_speed: 8
+jamp_speed: 8
+jamp_power: 3
