@@ -106,40 +106,33 @@ class GameObject extends PhysicsObject{
         this.angle = obj.angle;
         this.direction = obj.direction;
     }
+    collistion(oldX, oldY){
+        let collision = false;
+        if(this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
+            collision = true;
+        }
+        if(this.intersectBlock()){
+            collision = true;
+        }
+        if(collision){
+            this.x = oldX; this.y = oldY;
+        }
+        return collision;
+    }
     move(distance){
         const oldX = this.x, oldY = this.y;
 
         this.x += distance * Math.cos(this.angle);
         this.y += distance * Math.sin(this.angle);
 
-        let collision = false;
-        if(this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
-            collision = true;
-        }
-        if(this.intersectBlock()){
-            collision = true;
-        }
-        if(collision){
-            this.x = oldX; this.y = oldY;
-        }
-        return !collision;
+        return !this.collistion(oldX, oldY);
     }
     fall(distance){
         const oldX = this.x, oldY = this.y;
 
         this.y += distance;
 
-        let collision = false;
-        if(this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
-            collision = true;
-        }
-        if(this.intersectBlock()){
-            collision = true;
-        }
-        if(collision){
-            this.x = oldX; this.y = oldY;
-        }
-        return !collision;
+        return !this.collistion(oldX, oldY);
     }
     intersect(obj){
         return (this.x < obj.x + obj.width) &&
