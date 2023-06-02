@@ -20,6 +20,7 @@ const SERVER_NAME = 'main';
 const FIELD_WIDTH = server_conf.FIELD_WIDTH;
 const FIELD_HEIGHT = server_conf.FIELD_HEIGHT;
 const FPS = server_conf.FPS;
+const BLK = server_conf.BLOCK;
 
 const logger = STANDERD.logger({
     server_name: SERVER_NAME,
@@ -42,10 +43,12 @@ class CCDM extends ClientCommonDataManager{
     constructor(obj={}){
         super(obj);
         this.players = {};
+        this.blocks = {};
     }
     toJSON(){
         return Object.assign(super.toJSON(), {
             players: this.players,
+            blocks: this.blocks,
         });
     }
 }
@@ -141,9 +144,9 @@ class Player extends GameObject{
 
         this.movement = {};
 
-        this.width = 16;
-        this.height = 16;
-        this.x = FIELD_WIDTH * 0.5 - this.width;
+        this.width = BLK;
+        this.height = BLK;
+        this.x = BLK * 2;
         this.y = FIELD_HEIGHT * 0.5 - this.height;
         this.angle = 0;
         this.direction = 0;  // direction is right:0, left:1;
@@ -161,12 +164,30 @@ class Player extends GameObject{
     }
 }
 
+class hardBlock extends PhysicsObject{
+    constructor(obj={}){
+        super(obj);
+    }
+}
+
 // ### ---
 class GameMaster{
     constructor(){
         this.start();
     }
     start(){
+        // ground
+        let param = {
+            x: 0,
+            y: server_conf.FIELD_HEIGHT - BLK * 2,
+            height: BLK * 2,
+            width: BLK * 1,
+        }
+        for(let i=0; i<server_conf.FIELD_WIDTH; i+=BLK){
+            param.x = i;
+            let block = new hardBlock(param);
+            ccdm.blocks[block.id] = block;
+        }
     }
 }
 

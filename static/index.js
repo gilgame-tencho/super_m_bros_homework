@@ -13,6 +13,9 @@ images.player = $('#player-image')[0];
 images.bg = {
     feald: $('#map')[0],
 }
+images.block = {
+    hard: $('#hard-block')[0],
+}
 
 function gameStart(){
     socket.emit('game-start', {nickname: $("#nickname").val() });
@@ -60,7 +63,7 @@ function drawImage(ctt, img, px, py=null, pw=null, ph=null){
 
 function view_reset_front(){
     cotxFT.clearRect(0, 0, canvFT.width, canvFT.height);
-    cotxFT.lineWidth = 10;
+    cotxFT.lineWidth = 1;
     cotxFT.beginPath();
     cotxFT.rect(0, 0, canvFT.width, canvFT.height);
     cotxFT.stroke();
@@ -93,6 +96,9 @@ socket.on('menu-frame', function(ccdm) {
 socket.on('state', function(ccdm) {
     view_reset_middle();
 
+    Object.values(ccdm.blocks).forEach((block) => {
+        drawImage(cotxMD, images.block.hard, block);
+    });
     Object.values(ccdm.players).forEach((player) => {
         cotxMD.save();
         drawImage(cotxMD, images.player, player);
