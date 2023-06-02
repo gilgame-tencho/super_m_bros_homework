@@ -11,4 +11,4 @@ BLOCK: 16
 
 # Game base config
 FPS: 30
-move_score: 10
+move_score: 4

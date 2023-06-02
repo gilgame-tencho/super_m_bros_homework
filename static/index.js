@@ -22,6 +22,7 @@ function gameStart(){
     $("#start-screen").hide();
 }
 $("#start-button").on('click', gameStart);
+gameStart();
 
 let movement = {};
 $(document).on('keydown keyup', (event) => {
@@ -80,6 +81,15 @@ function view_reset_all(){
     view_reset_middle();
     view_reset_background();
 }
+function debug_show_object_line(cotx, obj){
+    cotx.save();
+    cotx.lineWidth = 1;
+    cotx.strokeStyle = "#00aa00";
+    cotx.beginPath();
+    cotx.rect(obj.x, obj.y, obj.width, obj.height);
+    cotx.stroke();
+    cotx.restore();
+}
 
 // init -----
 view_reset_all();
@@ -98,11 +108,11 @@ socket.on('state', function(ccdm) {
 
     Object.values(ccdm.blocks).forEach((block) => {
         drawImage(cotxMD, images.block.hard, block);
+        // debug_show_object_line(cotxMD, block);
     });
     Object.values(ccdm.players).forEach((player) => {
-        cotxMD.save();
         drawImage(cotxMD, images.player, player);
-        cotxMD.restore();
+        // debug_show_object_line(cotxMD, player);
 
         if(player.socketId === socket.id){
             cotxMD.save();

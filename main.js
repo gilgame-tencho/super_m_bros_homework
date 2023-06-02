@@ -116,16 +116,43 @@ class GameObject extends PhysicsObject{
         if(this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
             collision = true;
         }
+        if(this.intersectBlock()){
+            collision = true;
+        }
+        if(collision){
+            this.x = oldX; this.y = oldY;
+        }
+        return !collision;
+    }
+    fall(distance){
+        const oldX = this.x, oldY = this.y;
+
+        this.y += distance;
+
+        let collision = false;
+        if(this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
+            collision = true;
+        }
+        if(this.intersectBlock()){
+            collision = true;
+        }
         if(collision){
             this.x = oldX; this.y = oldY;
         }
         return !collision;
     }
     intersect(obj){
-        return (this.x <= obj.x + obj.width) &&
-            (this.x + this.width >= obj.x) &&
-            (this.y <= obj.y + obj.height) &&
-            (this.y + this.height >= obj.y);
+        return (this.x < obj.x + obj.width) &&
+            (this.x + this.width > obj.x) &&
+            (this.y < obj.y + obj.height) &&
+            (this.y + this.height > obj.y);
+    }
+    intersectBlock(){
+        return Object.keys(ccdm.blocks).some((id)=>{
+            if(this.intersect(ccdm.blocks[id])){
+                return true;
+            }
+        });
     }
     toJSON(){
         return Object.assign(super.toJSON(), {
@@ -150,6 +177,9 @@ class Player extends GameObject{
         this.y = FIELD_HEIGHT * 0.5 - this.height;
         this.angle = 0;
         this.direction = 0;  // direction is right:0, left:1;
+        this.gravity_timer = setInterval(()=>{
+            this.fall(server_conf.move_score);
+        }, 1000/FPS);
     }
     remove(){
         delete players[this.id];
@@ -261,4 +291,6 @@ app.get('/', (request, response) => {
 
 server.listen(server_conf.port, function() {
   logger.info(`Starting server on port ${server_conf.port}`);
+  logger.info(`Server conf`);
+  console.log(server_conf);
 });
