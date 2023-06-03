@@ -14,4 +14,4 @@ FPS: 30
 move_speed: 4
 fall_speed: 8
 jamp_speed: 8
-jamp_power: 3
+jamp_power: 5

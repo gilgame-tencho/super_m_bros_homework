@@ -18,6 +18,7 @@ images.bg = {
 }
 images.block = {
     hard: $('#img-hard-block')[0],
+    normal: $('#img-normal-block')[0],
 }
 
 function gameStart(){
@@ -113,7 +114,7 @@ socket.on('state', function(ccdm) {
     view_reset_middle();
 
     Object.values(ccdm.blocks).forEach((block) => {
-        drawImage(cotxMD, images.block.hard, block);
+        drawImage(cotxMD, images.block[block.type], block);
         // debug_show_object_line(cotxMD, block);
     });
     Object.values(ccdm.players).forEach((player) => {

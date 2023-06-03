@@ -221,9 +221,27 @@ class Player extends GameObject{
     }
 }
 
-class hardBlock extends PhysicsObject{
+class commonBlock extends PhysicsObject{
     constructor(obj={}){
         super(obj);
+        this.type = obj.type;
+    }
+    toJSON(){
+        return Object.assign(super.toJSON(),{
+            type: this.type,
+        });
+    }
+}
+class hardBlock extends commonBlock{
+    constructor(obj={}){
+        super(obj);
+        this.type = "hard";
+    }
+}
+class normalBlock extends commonBlock{
+    constructor(obj={}){
+        super(obj);
+        this.type = "normal";
     }
 }
 
@@ -243,6 +261,17 @@ class GameMaster{
         for(let i=0; i<server_conf.FIELD_WIDTH; i+=BLK){
             param.x = i;
             let block = new hardBlock(param);
+            ccdm.blocks[block.id] = block;
+        }
+        param = {
+            x: BLK * 9,
+            y: server_conf.FIELD_HEIGHT - BLK * (2 + 4),
+            height: BLK * 1,
+            width: BLK * 1,
+        }
+        for(let i=param.x; i<server_conf.FIELD_WIDTH; i+=BLK){
+            param.x = i;
+            let block = new normalBlock(param);
             ccdm.blocks[block.id] = block;
         }
     }
