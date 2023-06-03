@@ -19,6 +19,7 @@ images.bg = {
 images.block = {
     hard: $('#img-hard-block')[0],
     normal: $('#img-normal-block')[0],
+    hatena: $('#img-hatena-block')[0],
 }
 
 function gameStart(){

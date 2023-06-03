@@ -244,6 +244,12 @@ class normalBlock extends commonBlock{
         this.type = "normal";
     }
 }
+class hatenaBlock extends commonBlock{
+    constructor(obj={}){
+        super(obj);
+        this.type = "hatena";
+    }
+}
 
 // ### ---
 class GameMaster{
@@ -271,7 +277,12 @@ class GameMaster{
         }
         for(let i=param.x; i<server_conf.FIELD_WIDTH; i+=BLK){
             param.x = i;
-            let block = new normalBlock(param);
+            let block;
+            if(i == BLK * 11){
+                block = new hatenaBlock(param);
+            }else{
+                block = new normalBlock(param);
+            }
             ccdm.blocks[block.id] = block;
         }
     }
