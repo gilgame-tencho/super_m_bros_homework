@@ -44,11 +44,13 @@ class CCDM extends ClientCommonDataManager{
         super(obj);
         this.players = {};
         this.blocks = {};
+        this.stage = new Stage();
     }
     toJSON(){
         return Object.assign(super.toJSON(), {
             players: this.players,
             blocks: this.blocks,
+            stage: this.stage,
         });
     }
 }
@@ -225,6 +227,8 @@ class commonBlock extends PhysicsObject{
     constructor(obj={}){
         super(obj);
         this.type = obj.type;
+        this.height = BLK * 1;
+        this.width = BLK;
     }
     toJSON(){
         return Object.assign(super.toJSON(),{
@@ -236,6 +240,7 @@ class hardBlock extends commonBlock{
     constructor(obj={}){
         super(obj);
         this.type = "hard";
+        this.height = BLK * 2;
     }
 }
 class normalBlock extends commonBlock{
@@ -250,6 +255,38 @@ class hatenaBlock extends commonBlock{
         this.type = "hatena";
     }
 }
+class Stage extends GeneralObject{
+    constructor(obj={}){
+        super(obj);
+        this.no = obj.no;
+        // height max 14, width max 500
+        // height min 14, width min 16
+        // mark{ 'b':hardblock ''or null: nothing 'nb':normalblock}
+        this.map = this.def();
+    }
+    def(){
+        let st = [];
+        let MAX_HEIGHT = server_conf.FIELD_HEIGHT / BLK - 1;
+        let MAX_WIDTH = server_conf.FIELD_WIDTH / BLK;
+        for(let x=0; x<MAX_WIDTH; x++){
+            st.push([]);
+            for(let y=0; y<MAX_HEIGHT; y++){
+                if(y == MAX_HEIGHT - 1){
+                    st[x].push('b');
+                }else{
+                    st[x].push('');
+                }
+            }
+        }
+        return st;
+    }
+    toJSON(){
+        return Object.assign(super.toJSON(),{
+            no: this.no,
+            map: this.map,
+        });
+    }
+}
 
 // ### ---
 class GameMaster{
@@ -257,12 +294,28 @@ class GameMaster{
         this.start();
     }
     start(){
+        let x = 0;
+        let y = 0;
+        ccdm.stage.map.forEach((line)=>{
+            y = 0;
+            line.forEach((point)=>{
+                if(point == 'b'){
+                    let block = new hardBlock({
+                        x: x * BLK,
+                        y: y * BLK,
+                    });
+                    ccdm.blocks[block.id] = block;
+                }
+                y++;
+            });
+            x++;
+        });
+    }
+    sample(){
         // ground
         let param = {
             x: 0,
             y: server_conf.FIELD_HEIGHT - BLK * 2,
-            height: BLK * 2,
-            width: BLK * 1,
         }
         for(let i=0; i<server_conf.FIELD_WIDTH; i+=BLK){
             param.x = i;
@@ -272,8 +325,6 @@ class GameMaster{
         param = {
             x: BLK * 9,
             y: server_conf.FIELD_HEIGHT - BLK * (2 + 4),
-            height: BLK * 1,
-            width: BLK * 1,
         }
         for(let i=param.x; i<server_conf.FIELD_WIDTH; i+=BLK){
             param.x = i;
