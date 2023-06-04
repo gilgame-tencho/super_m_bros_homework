@@ -21,6 +21,8 @@ const FIELD_WIDTH = server_conf.FIELD_WIDTH;
 const FIELD_HEIGHT = server_conf.FIELD_HEIGHT;
 const FPS = server_conf.FPS;
 const BLK = server_conf.BLOCK;
+const MAX_HEIGHT = FIELD_HEIGHT / BLK - 1;
+const MAX_WIDTH = FIELD_WIDTH / BLK;
 
 const logger = STANDERD.logger({
     server_name: SERVER_NAME,
@@ -262,23 +264,55 @@ class Stage extends GeneralObject{
         // height max 14, width max 500
         // height min 14, width min 16
         // mark{ 'b':hardblock ''or null: nothing 'nb':normalblock}
-        this.map = this.def();
+        this.map = this.load_stage();
     }
     def(){
         let st = [];
-        let MAX_HEIGHT = server_conf.FIELD_HEIGHT / BLK - 1;
-        let MAX_WIDTH = server_conf.FIELD_WIDTH / BLK;
         for(let x=0; x<MAX_WIDTH; x++){
             st.push([]);
             for(let y=0; y<MAX_HEIGHT; y++){
                 if(y == MAX_HEIGHT - 1){
                     st[x].push('b');
                 }else{
-                    st[x].push('');
+                    st[x].push('.');
                 }
             }
         }
         return st;
+    }
+    load_stage(){
+        let stage = fs.readFileSync(__dirname + '/conf/stages/s1.txt', 'utf-8');
+        let lines = stage.split("\r\n");
+        if(!this.chk_stage(lines)){
+            return this.def();
+        }
+        let st = [];
+        for(let x=0; x<MAX_WIDTH; x++){
+            st.push([]);
+            for(let y=0; y<MAX_HEIGHT; y++){
+                st[x].push(lines[y][x+1]);
+            }
+        }
+        return st;
+    }
+    chk_stage(lines){
+        if(lines.length != MAX_HEIGHT){
+            logger.info(`No stage format. MAX_HEIGHT is ${MAX_HEIGHT}`);
+            return false;
+        }
+        let before_col = null;
+        let i = 0;
+        lines.forEach((l)=>{
+            let after_col = l.length;
+            if(before_col && before_col != l.length){
+                logger.info(`No stage format. line ${i}`);
+                return false;
+            }
+            before_col = after_col;
+            i++;
+        });
+        logger.info(`It's Good stage.`);
+        return true;
     }
     toJSON(){
         return Object.assign(super.toJSON(),{
@@ -292,6 +326,8 @@ class Stage extends GeneralObject{
 class GameMaster{
     constructor(){
         this.start();
+        logger.debug("game master.");
+        console.log(ccdm.stage.load_stage());
     }
     start(){
         let x = 0;
@@ -306,36 +342,24 @@ class GameMaster{
                     });
                     ccdm.blocks[block.id] = block;
                 }
+                if(point == 'n'){
+                    let block = new normalBlock({
+                        x: x * BLK,
+                        y: y * BLK,
+                    });
+                    ccdm.blocks[block.id] = block;
+                }
+                if(point == 'H'){
+                    let block = new hatenaBlock({
+                        x: x * BLK,
+                        y: y * BLK,
+                    });
+                    ccdm.blocks[block.id] = block;
+                }
                 y++;
             });
             x++;
         });
-    }
-    sample(){
-        // ground
-        let param = {
-            x: 0,
-            y: server_conf.FIELD_HEIGHT - BLK * 2,
-        }
-        for(let i=0; i<server_conf.FIELD_WIDTH; i+=BLK){
-            param.x = i;
-            let block = new hardBlock(param);
-            ccdm.blocks[block.id] = block;
-        }
-        param = {
-            x: BLK * 9,
-            y: server_conf.FIELD_HEIGHT - BLK * (2 + 4),
-        }
-        for(let i=param.x; i<server_conf.FIELD_WIDTH; i+=BLK){
-            param.x = i;
-            let block;
-            if(i == BLK * 11){
-                block = new hatenaBlock(param);
-            }else{
-                block = new normalBlock(param);
-            }
-            ccdm.blocks[block.id] = block;
-        }
     }
 }
 
