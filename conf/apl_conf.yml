@@ -1,10 +1,4 @@
-# Server config
-port: 3000
-apl_db: 3001
-
-loglevel: debug
-debug_process: false
-
+# View config
 FIELD_WIDTH: 256
 FIELD_HEIGHT: 240
 BLOCK: 16
