@@ -20,6 +20,8 @@ images.block = {
     hard: $('#img-hard-block')[0],
     normal: $('#img-normal-block')[0],
     hatena: $('#img-hatena-block')[0],
+    dokan_head: $('#img-dokan-head-block')[0],
+    dokan_body: $('#img-dokan-body-block')[0],
 }
 
 const MY_USER_ID = Math.floor(Math.random()*1000000000);
@@ -113,10 +115,25 @@ socket.on('back-frame', function(ccdm) {
 
 socket.on('menu-frame', function(ccdm) {
     view_reset_front();
+
+    const mymenu = ccdm.players[MY_USER_ID].menu;
+    cotxFT.save();
+    cotxFT.lineWidth = 3;
+    cotxFT.strokeStyle = "#000000";
+    cotxFT.font = "8px Bold 'ＭＳ ゴシック'";
+    cotxFT.fillText(mymenu.name.v, mymenu.name.x, mymenu.name.y);
+    cotxFT.fillText(`000010${mymenu.score.v}`, mymenu.score.x, mymenu.score.y);
+    cotxFT.fillText(`C x 0${mymenu.coin.v}`, mymenu.coin.x, mymenu.coin.y);
+    cotxFT.fillText(mymenu.stage_name.v, mymenu.stage_name.x, mymenu.stage_name.y);
+    cotxFT.fillText(mymenu.stage_no.v, mymenu.stage_no.x, mymenu.stage_no.y);
+    cotxFT.fillText(mymenu.time_title.v, mymenu.time_title.x, mymenu.time_title.y);
+    cotxFT.fillText(mymenu.time.v, mymenu.time.x, mymenu.time.y);
+    cotxFT.restore();
 });
 
 socket.on('state', function(ccdm) {
     view_reset_middle();
+    const MARGIN = ccdm.conf.BLK * 3;
 
     Object.values(ccdm.blocks).forEach((block) => {
         let param = {
@@ -125,7 +142,9 @@ socket.on('state', function(ccdm) {
             width: block.width,
             height: block.height,
         }
-        drawImage(cotxMD, images.block[block.type], param);
+        if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
+            drawImage(cotxMD, images.block[block.type], param);
+        }
     });
     Object.values(ccdm.players).forEach((player) => {
         let img = images.player[player.direction];
@@ -135,14 +154,16 @@ socket.on('state', function(ccdm) {
             width: player.width,
             height: player.height,
         }
-        drawImage(cotxMD, img, param);
-        // debug_show_object_line(cotxMD, player);
+        if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
+            drawImage(cotxMD, img, param);
+            // debug_show_object_line(cotxMD, player);
 
-        if(player.socketId === socket.id){
-            cotxMD.save();
-            cotxMD.font = '8px Bold Arial';
-            cotxMD.fillText('You', param.x + 2, param.y - 5);
-            cotxMD.restore();
+            if(player.socketId === socket.id){
+                cotxMD.save();
+                cotxMD.font = '8px Bold Arial';
+                cotxMD.fillText('You', param.x + 2, param.y - 5);
+                cotxMD.restore();
+            }
         }
     });
 });
