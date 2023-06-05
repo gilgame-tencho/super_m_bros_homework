@@ -117,6 +117,7 @@ socket.on('menu-frame', function(ccdm) {
 
 socket.on('state', function(ccdm) {
     view_reset_middle();
+    const MARGIN = ccdm.conf.BLK * 3;
 
     Object.values(ccdm.blocks).forEach((block) => {
         let param = {
@@ -125,7 +126,9 @@ socket.on('state', function(ccdm) {
             width: block.width,
             height: block.height,
         }
-        drawImage(cotxMD, images.block[block.type], param);
+        if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
+            drawImage(cotxMD, images.block[block.type], param);
+        }
     });
     Object.values(ccdm.players).forEach((player) => {
         let img = images.player[player.direction];
@@ -135,14 +138,16 @@ socket.on('state', function(ccdm) {
             width: player.width,
             height: player.height,
         }
-        drawImage(cotxMD, img, param);
-        // debug_show_object_line(cotxMD, player);
+        if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
+            drawImage(cotxMD, img, param);
+            // debug_show_object_line(cotxMD, player);
 
-        if(player.socketId === socket.id){
-            cotxMD.save();
-            cotxMD.font = '8px Bold Arial';
-            cotxMD.fillText('You', param.x + 2, param.y - 5);
-            cotxMD.restore();
+            if(player.socketId === socket.id){
+                cotxMD.save();
+                cotxMD.font = '8px Bold Arial';
+                cotxMD.fillText('You', param.x + 2, param.y - 5);
+                cotxMD.restore();
+            }
         }
     });
 });
