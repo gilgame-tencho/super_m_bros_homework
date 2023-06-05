@@ -193,6 +193,17 @@ class Player extends GameObject{
         this.view_x = 0;
         if(obj.id){ this.id = obj.id }
 
+        this.menu = {
+            name:       { x: BLK*1, y: BLK*1, v:this.nickname },
+            score:      { x: BLK*1, y: BLK*2, v:0 },
+
+            coin:       { x: BLK*5, y: BLK*2, v:0 },
+            stage_name: { x: BLK*9, y: BLK*1, v:"WORLD" },
+            stage_no:   { x: BLK*9, y: BLK*2, v:"1-1" },
+            time_title: { x: BLK*13, y: BLK*1, v:"TIME" },
+            time:       { x: BLK*13, y: BLK*2, v:300 },
+        }
+
         this.movement = {};
 
         this.width = BLK;
@@ -267,6 +278,7 @@ class Player extends GameObject{
             nickname: this.nickname,
             player_type: this.player_type,
             view_x: this.view_x,
+            menu: this.menu,
         });
     }
 }
@@ -491,6 +503,7 @@ const interval_game = () => {
         }
     });
     io.sockets.emit('state', ccdm);
+    io.sockets.emit('menu-frame', ccdm);
 }
 
 function start_interval_game(){
