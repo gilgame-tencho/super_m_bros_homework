@@ -131,3 +131,6 @@ dist
 
 # package-json
 package-lock.json
+
+# ignore config.
+conf/server_conf.yml

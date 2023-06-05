@@ -1,0 +1,6 @@
+# Server config
+port: 3000
+apl_db: 3001
+
+loglevel: debug
+debug_process: false
