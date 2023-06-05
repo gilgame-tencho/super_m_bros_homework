@@ -8,6 +8,7 @@ debug_process: false
 FIELD_WIDTH: 256
 FIELD_HEIGHT: 240
 BLOCK: 16
+CENTER: 8
 
 # Game base config
 FPS: 30

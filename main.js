@@ -23,6 +23,7 @@ const FPS = server_conf.FPS;
 const BLK = server_conf.BLOCK;
 const MAX_HEIGHT = FIELD_HEIGHT / BLK - 1;
 const MAX_WIDTH = FIELD_WIDTH / BLK;
+const CENTER = server_conf.CENTER;
 
 const logger = STANDERD.logger({
     server_name: SERVER_NAME,
@@ -47,12 +48,23 @@ class CCDM extends ClientCommonDataManager{
         this.players = {};
         this.blocks = {};
         this.stage = new Stage();
+        this.conf = {
+            SERVER_NAME: SERVER_NAME,
+            FIELD_WIDTH: FIELD_WIDTH,
+            FIELD_HEIGHT: FIELD_HEIGHT,
+            FPS: FPS,
+            BLK: BLK,
+            MAX_HEIGHT: MAX_HEIGHT,
+            MAX_WIDTH: MAX_WIDTH,
+            CENTER: CENTER,
+        };
     }
     toJSON(){
         return Object.assign(super.toJSON(), {
             players: this.players,
             blocks: this.blocks,
             stage: this.stage,
+            conf: this.conf,
         });
     }
 }
@@ -126,8 +138,10 @@ class GameObject extends PhysicsObject{
     move(distance){
         const oldX = this.x, oldY = this.y;
 
-        this.x += distance * Math.cos(this.angle);
-        this.y += distance * Math.sin(this.angle);
+        let dis_x = distance * Math.cos(this.angle);
+        let dis_y = distance * Math.sin(this.angle);
+        this.x += dis_x;
+        this.y += dis_y;
 
         return !this.collistion(oldX, oldY);
     }
@@ -172,6 +186,8 @@ class Player extends GameObject{
         this.socketId = obj.socketId;
         this.nickname = obj.nickname;
         this.player_type = 'player';
+        this.view_x = 0;
+        if(obj.id){ this.id = obj.id }
 
         this.movement = {};
 
@@ -188,6 +204,31 @@ class Player extends GameObject{
             this.fall(server_conf.fall_speed);
         }
         this.gravity_timer = setInterval(this.gravity_func, 1000/FPS);
+    }
+    collistion(oldX, oldY, oldViewX=this.view_x){
+        let collision = super.collistion(oldX, oldY);
+        if(collision){
+            this.x = oldX; this.y = oldY;
+            this.view_x = oldViewX;
+        }
+        return collision;
+    }
+    move(distance){
+        const oldX = this.x, oldY = this.y;
+        const oldViewX = this.view_x;
+
+        let dis_x = distance * Math.cos(this.angle);
+        let dis_y = distance * Math.sin(this.angle);
+        if(this.x + dis_x <= this.view_x + CENTER){
+            this.x += dis_x;
+            this.y += dis_y;
+        }else{
+            this.view_x += dis_x;
+            this.x += dis_x;
+            this.y += dis_y;
+        }
+
+        return !this.collistion(oldX, oldY, oldViewX);
     }
     fall(distance){
         this.flg_fly = super.fall(distance);
@@ -220,7 +261,8 @@ class Player extends GameObject{
         return Object.assign(super.toJSON(), {
             socketId: this.socketId,
             nickname: this.nickname,
-            player_type: this.player_type
+            player_type: this.player_type,
+            view_x: this.view_x,
         });
     }
 }
@@ -263,7 +305,7 @@ class Stage extends GeneralObject{
         this.no = obj.no;
         // height max 14, width max 500
         // height min 14, width min 16
-        // mark{ 'b':hardblock ''or null: nothing 'nb':normalblock}
+        // mark{ 'b':hardblock '.': nothing 'n':normalblock}
         this.map = this.load_stage();
     }
     def(){
@@ -373,6 +415,7 @@ io.on('connection', function(socket) {
         player = new Player({
             socketId: socket.id,
             nickname: config.nickname,
+            id: config.userid,
         });
         ccdm.players[player.id] = player;
     });

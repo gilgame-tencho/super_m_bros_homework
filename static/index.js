@@ -22,8 +22,12 @@ images.block = {
     hatena: $('#img-hatena-block')[0],
 }
 
+const MY_USER_ID = Math.floor(Math.random()*1000000000);
 function gameStart(){
-    socket.emit('game-start', {nickname: $("#nickname").val() });
+    socket.emit('game-start', {
+        nickname: $("#nickname").val(),
+        userid: MY_USER_ID,
+    });
     $("#start-screen").hide();
 }
 $("#start-button").on('click', gameStart);
@@ -115,18 +119,29 @@ socket.on('state', function(ccdm) {
     view_reset_middle();
 
     Object.values(ccdm.blocks).forEach((block) => {
-        drawImage(cotxMD, images.block[block.type], block);
-        // debug_show_object_line(cotxMD, block);
+        let param = {
+            x: block.x - ccdm.players[MY_USER_ID].view_x,
+            y: block.y,
+            width: block.width,
+            height: block.height,
+        }
+        drawImage(cotxMD, images.block[block.type], param);
     });
     Object.values(ccdm.players).forEach((player) => {
         let img = images.player[player.direction];
-        drawImage(cotxMD, img, player);
+        let param = {
+            x: player.x - ccdm.players[MY_USER_ID].view_x,
+            y: player.y,
+            width: player.width,
+            height: player.height,
+        }
+        drawImage(cotxMD, img, param);
         // debug_show_object_line(cotxMD, player);
 
         if(player.socketId === socket.id){
             cotxMD.save();
             cotxMD.font = '8px Bold Arial';
-            cotxMD.fillText('You', player.x + 2, player.y - 5);
+            cotxMD.fillText('You', param.x + 2, param.y - 5);
             cotxMD.restore();
         }
     });
