@@ -14,7 +14,7 @@ const yaml = require('yaml');
 const STANDERD = require('./game_modules/standerd_modules.js');
 const DB = require('./game_modules/database_modules.js');
 
-const server_conf = yaml.parse(fs.readFileSync(__dirname + '/conf/server_conf.yml', 'utf-8'));
+const server_conf = yaml.parse(fs.readFileSync(__dirname + '/conf/apl_conf.yml', 'utf-8'));
 
 const SERVER_NAME = 'main';
 const FIELD_WIDTH = server_conf.FIELD_WIDTH;
