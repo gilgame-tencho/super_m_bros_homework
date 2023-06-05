@@ -20,6 +20,8 @@ images.block = {
     hard: $('#img-hard-block')[0],
     normal: $('#img-normal-block')[0],
     hatena: $('#img-hatena-block')[0],
+    dokan_head: $('#img-dokan-head-block')[0],
+    dokan_body: $('#img-dokan-body-block')[0],
 }
 
 const MY_USER_ID = Math.floor(Math.random()*1000000000);

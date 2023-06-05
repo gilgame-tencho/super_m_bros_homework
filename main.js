@@ -303,6 +303,18 @@ class hatenaBlock extends commonBlock{
         this.type = "hatena";
     }
 }
+class dokanHeadBlock extends commonBlock{
+    constructor(obj={}){
+        super(obj);
+        this.type = "dokan_head";
+    }
+}
+class dokanBodyBlock extends commonBlock{
+    constructor(obj={}){
+        super(obj);
+        this.type = "dokan_body";
+    }
+}
 class Stage extends GeneralObject{
     constructor(obj={}){
         super(obj);
@@ -399,6 +411,20 @@ class GameMaster{
                 }
                 if(point == 'H'){
                     let block = new hatenaBlock({
+                        x: x * BLK,
+                        y: y * BLK,
+                    });
+                    ccdm.blocks[block.id] = block;
+                }
+                if(point == 'D'){
+                    let block = new dokanHeadBlock({
+                        x: x * BLK,
+                        y: y * BLK,
+                    });
+                    ccdm.blocks[block.id] = block;
+                }
+                if(point == 'd'){
+                    let block = new dokanBodyBlock({
                         x: x * BLK,
                         y: y * BLK,
                     });
