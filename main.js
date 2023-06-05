@@ -121,11 +121,12 @@ class GameObject extends PhysicsObject{
         super(obj);
         this.angle = obj.angle;
         this.direction = obj.direction;
+        this.END_POINT = obj.END_POINT ? obj.END_POINT : FIELD_WIDTH;
     }
     collistion(oldX, oldY){
         let collision = false;
-        if(this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
-            collision = true;
+        if(this.x < 0 || this.x + this.width >= this.END_POINT || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
+                collision = true;
         }
         if(this.intersectBlock()){
             collision = true;
@@ -307,6 +308,7 @@ class Stage extends GeneralObject{
         // height min 14, width min 16
         // mark{ 'b':hardblock '.': nothing 'n':normalblock}
         this.map = this.load_stage();
+        this.END_POINT = this.map.length * BLK;
     }
     def(){
         let st = [];
@@ -329,7 +331,7 @@ class Stage extends GeneralObject{
             return this.def();
         }
         let st = [];
-        for(let x=0; x<MAX_WIDTH; x++){
+        for(let x=0; x<lines[0].length; x++){
             st.push([]);
             for(let y=0; y<MAX_HEIGHT; y++){
                 st[x].push(lines[y][x+1]);
@@ -360,6 +362,7 @@ class Stage extends GeneralObject{
         return Object.assign(super.toJSON(),{
             no: this.no,
             map: this.map,
+            END_POINT: this.END_POINT,
         });
     }
 }
@@ -367,11 +370,11 @@ class Stage extends GeneralObject{
 // ### ---
 class GameMaster{
     constructor(){
-        this.start();
+        this.create_stage();
         logger.debug("game master.");
-        console.log(ccdm.stage.load_stage());
+        // console.log(ccdm.stage.load_stage());
     }
-    start(){
+    create_stage(){
         let x = 0;
         let y = 0;
         ccdm.stage.map.forEach((line)=>{
@@ -416,6 +419,7 @@ io.on('connection', function(socket) {
             socketId: socket.id,
             nickname: config.nickname,
             id: config.userid,
+            END_POINT: ccdm.stage.END_POINT,
         });
         ccdm.players[player.id] = player;
     });
