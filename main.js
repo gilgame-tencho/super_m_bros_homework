@@ -50,6 +50,7 @@ class CCDM extends ClientCommonDataManager{
         super(obj);
         this.players = {};
         this.blocks = {};
+        this.items = {};
         this.stage = new Stage();
         this.conf = {
             SERVER_NAME: SERVER_NAME,
@@ -66,6 +67,7 @@ class CCDM extends ClientCommonDataManager{
         return Object.assign(super.toJSON(), {
             players: this.players,
             blocks: this.blocks,
+            items: this.items,
             stage: this.stage,
             conf: this.conf,
         });
@@ -286,6 +288,7 @@ class Player extends GameObject{
 class commonBlock extends PhysicsObject{
     constructor(obj={}){
         super(obj);
+        this.attr = "Block";
         this.type = obj.type;
         this.height = BLK * 1;
         this.width = BLK;
@@ -293,6 +296,7 @@ class commonBlock extends PhysicsObject{
     toJSON(){
         return Object.assign(super.toJSON(),{
             type: this.type,
+            attr: this.attr,
         });
     }
 }
@@ -325,6 +329,47 @@ class dokanBodyBlock extends commonBlock{
     constructor(obj={}){
         super(obj);
         this.type = "dokan_body";
+    }
+}
+class commonItem extends PhysicsObject{
+    constructor(obj={}){
+        super(obj);
+        this.attr = 'Item';
+        this.type = obj.type;
+        this.height = BLK * 1;
+        this.width = BLK;
+    }
+    toJSON(){
+        return Object.assign(super.toJSON(),{
+            type: this.type,
+        });
+    }
+}
+class coinItem extends commonItem{
+    constructor(obj={}){
+        super(obj);
+        this.type = "coin";
+    }
+}
+class commonEfect extends PhysicsObject{
+    constructor(obj={}){
+        super(obj);
+        this.attr = 'Efect';
+        this.type = obj.type;
+        this.height = BLK * 1;
+        this.width = BLK;
+    }
+    toJSON(){
+        return Object.assign(super.toJSON(),{
+            type: this.type,
+            attr: this.attr,
+        });
+    }
+}
+class coinEfect extends commonItem{
+    constructor(obj={}){
+        super(obj);
+        this.type = "coin";
     }
 }
 class Stage extends GeneralObject{
