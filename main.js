@@ -320,6 +320,7 @@ class commonBlock extends PhysicsObject{
         this.width = BLK;
         this.touched = null;
         this.bounding = false;
+        this.effect = false;
     }
     toJSON(){
         return Object.assign(super.toJSON(),{
@@ -327,6 +328,7 @@ class commonBlock extends PhysicsObject{
             attr: this.attr,
             touched: this.touched,
             bounding: this.bounding,
+            effect: this.effect,
         });
     }
 }
@@ -349,6 +351,7 @@ class hatenaBlock extends commonBlock{
         super(obj);
         this.type = "hatena";
         this.bounding = true;
+        this.effect = 'coin';
     }
 }
 class dokanHeadBlock extends commonBlock{

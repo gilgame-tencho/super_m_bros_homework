@@ -155,7 +155,7 @@ const self_timer = () => {
 setInterval(self_timer, 1000/FPS);
 
 // -- action param ---------
-const efects = {};
+const effects = {};
 
 // -- server action --------
 socket.on('back-frame', function(ccdm) {
@@ -192,19 +192,19 @@ socket.on('state', function(ccdm) {
             width: piece.width,
             height: piece.height,
         }
-        if(piece.bounding && piece.touched && !efects[piece.id]){
-            efects[piece.id] = piece;
-            efects[piece.id].efect_step = 0;
+        if(piece.bounding && piece.touched && !effects[piece.id]){
+            effects[piece.id] = piece;
+            effects[piece.id].efect_step = 0;
         }
-        if(efects[piece.id]){
-            if(efects[piece.id].efect_step < 4){
-                param.y -= efects[piece.id].efect_step * 1;
-                efects[piece.id].efect_step++;
-            }else if(efects[piece.id].efect_step < 6){
-                param.y -= (6 - efects[piece.id].efect_step) * 1;
-                efects[piece.id].efect_step++;
+        if(effects[piece.id]){
+            if(effects[piece.id].efect_step < 4){
+                param.y -= effects[piece.id].efect_step * 1;
+                effects[piece.id].efect_step++;
+            }else if(effects[piece.id].efect_step < 6){
+                param.y -= (6 - effects[piece.id].efect_step) * 1;
+                effects[piece.id].efect_step++;
             }else{
-                delete efects[piece.id];
+                delete effects[piece.id];
             }
         }
         if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
