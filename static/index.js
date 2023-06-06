@@ -18,7 +18,7 @@ images.player = {
 images.bg = {
     feald: $('#img-map')[0],
 }
-images.block = {
+images.piece = {
     hard: $('#img-hard-block')[0],
     normal: $('#img-normal-block')[0],
     hatena: $('#img-hatena-block')[0],
@@ -29,9 +29,10 @@ images.block = {
     hatena_f2: $('#img-hatena-block_f2')[0],
     hatena_f3: $('#img-hatena-block_f3')[0],
     hatena_f4: $('#img-hatena-block_f4')[0],
+
+    coin: $('#img-coin-put')[0],
 }
-images.coin = {
-    put: $('#img-coin-put')[0],
+images.efect = {
     anime: $('#img-coin-front')[0],
     front: $('#img-coin-front')[0],
     c45w: $('#img-coin-45w')[0],
@@ -183,15 +184,16 @@ socket.on('state', function(ccdm) {
     view_reset_middle();
     const MARGIN = ccdm.conf.BLK * 3;
 
-    Object.values(ccdm.blocks).forEach((block) => {
+    let pieces = Object.assign(ccdm.blocks, ccdm.items);
+    Object.values(pieces).forEach((piece) => {
         let param = {
-            x: block.x - ccdm.players[MY_USER_ID].view_x,
-            y: block.y,
-            width: block.width,
-            height: block.height,
+            x: piece.x - ccdm.players[MY_USER_ID].view_x,
+            y: piece.y,
+            width: piece.width,
+            height: piece.height,
         }
         if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
-            drawImage(cotxMD, images.block[block.type], param);
+            drawImage(cotxMD, images.piece[piece.type], param);
         }
     });
     Object.values(ccdm.players).forEach((player) => {

@@ -487,6 +487,13 @@ class GameMaster{
                     });
                     ccdm.blocks[block.id] = block;
                 }
+                if(point == 'c'){
+                    let item = new coinItem({
+                        x: x * BLK,
+                        y: y * BLK,
+                    });
+                    ccdm.items[item.id] = item;
+                }
                 y++;
             });
             x++;
