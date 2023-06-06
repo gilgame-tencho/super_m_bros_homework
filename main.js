@@ -319,12 +319,14 @@ class commonBlock extends PhysicsObject{
         this.height = BLK * 1;
         this.width = BLK;
         this.touched = null;
+        this.bounding = false;
     }
     toJSON(){
         return Object.assign(super.toJSON(),{
             type: this.type,
             attr: this.attr,
             touched: this.touched,
+            bounding: this.bounding,
         });
     }
 }
@@ -339,12 +341,14 @@ class normalBlock extends commonBlock{
     constructor(obj={}){
         super(obj);
         this.type = "normal";
+        this.bounding = true;
     }
 }
 class hatenaBlock extends commonBlock{
     constructor(obj={}){
         super(obj);
         this.type = "hatena";
+        this.bounding = true;
     }
 }
 class dokanHeadBlock extends commonBlock{
@@ -593,6 +597,13 @@ const interval_game = () => {
         io.sockets.emit('timer_sync', {timer: timer});
         timer = 0;
     }
+
+    // send after
+    Object.values(ccdm.blocks).forEach((block)=>{
+        if(block.bounding && block.touched){
+            block.touched = null;
+        }
+    });
     timer++;
 }
 

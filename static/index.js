@@ -155,7 +155,7 @@ const self_timer = () => {
 setInterval(self_timer, 1000/FPS);
 
 // -- action param ---------
-const efects = [];
+const efects = {};
 
 // -- server action --------
 socket.on('back-frame', function(ccdm) {
@@ -191,6 +191,21 @@ socket.on('state', function(ccdm) {
             y: piece.y,
             width: piece.width,
             height: piece.height,
+        }
+        if(piece.bounding && piece.touched && !efects[piece.id]){
+            efects[piece.id] = piece;
+            efects[piece.id].efect_step = 0;
+        }
+        if(efects[piece.id]){
+            if(efects[piece.id].efect_step < 4){
+                param.y -= efects[piece.id].efect_step * 1;
+                efects[piece.id].efect_step++;
+            }else if(efects[piece.id].efect_step < 6){
+                param.y -= (6 - efects[piece.id].efect_step) * 1;
+                efects[piece.id].efect_step++;
+            }else{
+                delete efects[piece.id];
+            }
         }
         if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
             drawImage(cotxMD, images.piece[piece.type], param);
