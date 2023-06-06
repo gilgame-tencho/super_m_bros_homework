@@ -223,7 +223,13 @@ class Player extends GameObject{
         this.gravity_timer = setInterval(this.gravity_func, 1000/FPS);
     }
     collistion(oldX, oldY, oldViewX=this.view_x){
-        let collision = super.collistion(oldX, oldY);
+        let collision = false;
+        if(this.x < 0 || this.x + this.width >= this.END_POINT || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
+                collision = true;
+        }
+        if(this.intersectBlock(oldX, oldY)){
+            collision = true;
+        }
         if(collision){
             this.x = oldX; this.y = oldY;
             this.view_x = oldViewX;
@@ -245,7 +251,27 @@ class Player extends GameObject{
             this.y += dis_y;
         }
 
-        return !this.collistion(oldX, oldY, oldViewX);
+        let collision = this.collistion(oldX, oldY, oldViewX);
+        if(!collision){
+            Object.keys(ccdm.items).forEach((id)=>{
+                if(ccdm.items[id] && this.intersect(ccdm.items[id])){
+                    ccdm.items[id].touched = this.id;
+                    this.menu.coin.v++;
+                    delete ccdm.items[id];
+                }
+            });
+        }
+        return !collision;
+    }
+    intersectBlock(oldX, oldY){
+        return Object.keys(ccdm.blocks).some((id)=>{
+            if(this.intersect(ccdm.blocks[id])){
+                if(oldY > this.y){
+                    ccdm.blocks[id].touched = this.id;
+                }
+                return true;
+            }
+        });
     }
     fall(distance){
         this.flg_fly = super.fall(distance);
@@ -292,11 +318,17 @@ class commonBlock extends PhysicsObject{
         this.type = obj.type;
         this.height = BLK * 1;
         this.width = BLK;
+        this.touched = null;
+        this.bounding = false;
+        this.effect = false;
     }
     toJSON(){
         return Object.assign(super.toJSON(),{
             type: this.type,
             attr: this.attr,
+            touched: this.touched,
+            bounding: this.bounding,
+            effect: this.effect,
         });
     }
 }
@@ -311,12 +343,15 @@ class normalBlock extends commonBlock{
     constructor(obj={}){
         super(obj);
         this.type = "normal";
+        this.bounding = true;
     }
 }
 class hatenaBlock extends commonBlock{
     constructor(obj={}){
         super(obj);
         this.type = "hatena";
+        this.bounding = true;
+        this.effect = 'coin';
     }
 }
 class dokanHeadBlock extends commonBlock{
@@ -338,10 +373,13 @@ class commonItem extends PhysicsObject{
         this.type = obj.type;
         this.height = BLK * 1;
         this.width = BLK;
+        this.touched = null;
     }
     toJSON(){
         return Object.assign(super.toJSON(),{
             type: this.type,
+            attr: this.attr,
+            touched: this.touched,
         });
     }
 }
@@ -487,6 +525,13 @@ class GameMaster{
                     });
                     ccdm.blocks[block.id] = block;
                 }
+                if(point == 'c'){
+                    let item = new coinItem({
+                        x: x * BLK,
+                        y: y * BLK,
+                    });
+                    ccdm.items[item.id] = item;
+                }
                 y++;
             });
             x++;
@@ -555,6 +600,13 @@ const interval_game = () => {
         io.sockets.emit('timer_sync', {timer: timer});
         timer = 0;
     }
+
+    // send after
+    Object.values(ccdm.blocks).forEach((block)=>{
+        if(block.bounding && block.touched){
+            block.touched = null;
+        }
+    });
     timer++;
 }
 

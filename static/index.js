@@ -18,7 +18,7 @@ images.player = {
 images.bg = {
     feald: $('#img-map')[0],
 }
-images.block = {
+images.piece = {
     hard: $('#img-hard-block')[0],
     normal: $('#img-normal-block')[0],
     hatena: $('#img-hatena-block')[0],
@@ -29,14 +29,15 @@ images.block = {
     hatena_f2: $('#img-hatena-block_f2')[0],
     hatena_f3: $('#img-hatena-block_f3')[0],
     hatena_f4: $('#img-hatena-block_f4')[0],
+
+    coin: $('#img-coin-put')[0],
 }
-images.coin = {
-    put: $('#img-coin-put')[0],
-    anime: $('#img-coin-front')[0],
-    front: $('#img-coin-front')[0],
-    c45w: $('#img-coin-45w')[0],
-    c45u: $('#img-coin-45u')[0],
-    yoko: $('#img-coin-yoko')[0],
+images.efect = {
+    anime: $('#img-coin-anime-front')[0],
+    front: $('#img-coin-anime-front')[0],
+    c45w: $('#img-coin-anime-45w')[0],
+    c45u: $('#img-coin-anime-45u')[0],
+    yoko: $('#img-coin-anime-yoko')[0],
 }
 
 const MY_USER_ID = Math.floor(Math.random()*1000000000);
@@ -135,8 +136,8 @@ const self_timer = () => {
     let hatena = ['hatena_f1', 'hatena_f2', 'hatena_f3', 'hatena_f4', 'hatena_f3', 'hatena_f2',];
     let frame = 5;
     let i = Math.floor(timer / frame) % hatena.length;
-    console.log(`[self_timer] t:${timer}, i:${hatena[i]}`);
-    images.block.hatena = images.block[hatena[i]];
+    // console.log(`[self_timer] t:${timer}, i:${hatena[i]}`);
+    images.piece.hatena = images.piece[hatena[i]];
 
     // coin
     let coin = [
@@ -147,14 +148,17 @@ const self_timer = () => {
     ];
     frame = 2;
     i = Math.floor(timer / frame) % coin.length;
-    images.coin.anime = images.coin[coin[i]];
+    // images.efect.anime = images.efect.anime[coin[i]];
 
     timer++;
 }
 setInterval(self_timer, 1000/FPS);
 
 // -- action param ---------
-const efects = [];
+const effects = {
+    bounding: {},
+    coin: {},
+};
 
 // -- server action --------
 socket.on('back-frame', function(ccdm) {
@@ -183,15 +187,67 @@ socket.on('state', function(ccdm) {
     view_reset_middle();
     const MARGIN = ccdm.conf.BLK * 3;
 
-    Object.values(ccdm.blocks).forEach((block) => {
+    let pieces = Object.assign(ccdm.blocks, ccdm.items);
+    Object.values(pieces).forEach((piece) => {
         let param = {
-            x: block.x - ccdm.players[MY_USER_ID].view_x,
-            y: block.y,
-            width: block.width,
-            height: block.height,
+            x: piece.x - ccdm.players[MY_USER_ID].view_x,
+            y: piece.y,
+            width: piece.width,
+            height: piece.height,
         }
+        // bounding -----------------
+        if(piece.bounding && piece.touched && !effects.bounding[piece.id]){
+            effects.bounding[piece.id] = piece;
+            effects.bounding[piece.id].efect_step = 0;
+        }
+        if(effects.bounding[piece.id]){
+            if(effects.bounding[piece.id].efect_step < 4){
+                param.y -= effects.bounding[piece.id].efect_step * 1;
+                effects.bounding[piece.id].efect_step++;
+            }else if(effects.bounding[piece.id].efect_step < 6){
+                param.y -= (6 - effects.bounding[piece.id].efect_step) * 1;
+                effects.bounding[piece.id].efect_step++;
+            }else{
+                delete effects.bounding[piece.id];
+            }
+        }
+        // effect coin -----------------
+        if(piece.effect == 'coin' && piece.touched && !effects.coin[piece.id]){
+            effects.coin[piece.id] = piece;
+            effects.coin[piece.id].efect_step = 0;
+            effects.coin[piece.id].y -= 8;
+        }
+        if(effects.coin[piece.id]){
+            let coin_img = [
+                'yoko',
+                'c45u',
+                'c45w',
+            ];
+            let coin = effects.coin[piece.id];
+            if(coin.efect_step < 6){
+                coin.y -= coin.efect_step * 1;
+            }else if(coin.efect_step < 12){
+                coin.y -= (12 - coin.efect_step) * 1;
+            }
+            let param = {
+                x: coin.x - ccdm.players[MY_USER_ID].view_x,
+                y: coin.y,
+                width: coin.width,
+                height: coin.height,
+            }
+            if(coin.efect_step < 12){
+                console.log("coin.efect_step");
+                console.log(images.efect.anime);
+                let img = coin_img[coin.efect_step % coin_img.length];
+                drawImage(cotxMD, images.efect[img], param);
+                coin.efect_step++
+            }else{
+                delete effects.coin[piece.id];
+            }
+        }
+
         if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
-            drawImage(cotxMD, images.block[block.type], param);
+            drawImage(cotxMD, images.piece[piece.type], param);
         }
     });
     Object.values(ccdm.players).forEach((player) => {
