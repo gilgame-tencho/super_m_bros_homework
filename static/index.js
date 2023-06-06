@@ -8,6 +8,8 @@ const cotxMD = canvMD.getContext('2d');
 const canvBK = $('#canvas-back')[0];
 const cotxBK = canvBK.getContext('2d');
 
+let timer = 0;
+
 const images = {};
 images.player = {
     r: $('#img-player-r')[0],
@@ -22,6 +24,19 @@ images.block = {
     hatena: $('#img-hatena-block')[0],
     dokan_head: $('#img-dokan-head-block')[0],
     dokan_body: $('#img-dokan-body-block')[0],
+
+    hatena_f1: $('#img-hatena-block_f1')[0],
+    hatena_f2: $('#img-hatena-block_f2')[0],
+    hatena_f3: $('#img-hatena-block_f3')[0],
+    hatena_f4: $('#img-hatena-block_f4')[0],
+}
+images.coin = {
+    put: $('#img-coin-put')[0],
+    anime: $('#img-coin-front')[0],
+    front: $('#img-coin-front')[0],
+    c45w: $('#img-coin-45w')[0],
+    c45u: $('#img-coin-45u')[0],
+    yoko: $('#img-coin-yoko')[0],
 }
 
 const MY_USER_ID = Math.floor(Math.random()*1000000000);
@@ -108,7 +123,40 @@ function debug_show_object_line(cotx, obj){
 // init -----
 view_reset_all();
 
-// ----------
+// -- timer --------
+const FPS = 30;
+socket.on('timer_sync', function(param) {
+    console.log(`this.timer: ${timer},\tserver.timer:${param.timer}. timer is reset.`);
+    timer = 0;
+});
+const self_timer = () => {
+    // animation --------------------
+    // hatena
+    let hatena = ['hatena_f1', 'hatena_f2', 'hatena_f3', 'hatena_f4', 'hatena_f3', 'hatena_f2',];
+    let frame = 5;
+    let i = Math.floor(timer / frame) % hatena.length;
+    console.log(`[self_timer] t:${timer}, i:${hatena[i]}`);
+    images.block.hatena = images.block[hatena[i]];
+
+    // coin
+    let coin = [
+        'yoko',
+        'c45w',
+        'front',
+        'c45u',
+    ];
+    frame = 2;
+    i = Math.floor(timer / frame) % coin.length;
+    images.coin.anime = images.coin[coin[i]];
+
+    timer++;
+}
+setInterval(self_timer, 1000/FPS);
+
+// -- action param ---------
+const efects = [];
+
+// -- server action --------
 socket.on('back-frame', function(ccdm) {
     view_reset_background();
 });
