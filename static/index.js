@@ -24,10 +24,13 @@ images.block = {
     hatena: $('#img-hatena-block')[0],
     dokan_head: $('#img-dokan-head-block')[0],
     dokan_body: $('#img-dokan-body-block')[0],
+
     hatena_f1: $('#img-hatena-block_f1')[0],
     hatena_f2: $('#img-hatena-block_f2')[0],
     hatena_f3: $('#img-hatena-block_f3')[0],
     hatena_f4: $('#img-hatena-block_f4')[0],
+    hatena_f5: $('#img-hatena-block_f3')[0],
+    hatena_f6: $('#img-hatena-block_f2')[0],
 }
 
 const MY_USER_ID = Math.floor(Math.random()*1000000000);
@@ -121,6 +124,11 @@ socket.on('timer_sync', function(param) {
     timer = 0;
 });
 const self_timer = () => {
+    let hatena = ['hatena_f1', 'hatena_f2', 'hatena_f3', 'hatena_f4', 'hatena_f5', 'hatena_f6',];
+    let frame = 5;
+    let i = Math.floor(timer / frame) % hatena.length;
+    console.log(`[self_timer] t:${timer}, i:${hatena[i]}`);
+    images.block.hatena = images.block[hatena[i]];
     timer++;
 }
 setInterval(self_timer, 1000/FPS);
