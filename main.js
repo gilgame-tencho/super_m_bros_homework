@@ -478,6 +478,8 @@ io.on('connection', function(socket) {
     });
 });
 
+const time_max = 30 * 60 * 5;
+let timer = 0;
 const interval_game = () => {
     Object.values(ccdm.players).forEach((player) => {
         const movement = player.movement;
@@ -504,6 +506,11 @@ const interval_game = () => {
     });
     io.sockets.emit('state', ccdm);
     io.sockets.emit('menu-frame', ccdm);
+    if(timer > time_max){
+        io.sockets.emit('timer_sync', {timer: timer});
+        timer = 0;
+    }
+    timer++;
 }
 
 function start_interval_game(){
@@ -520,6 +527,8 @@ const app_param = {
 app.get('/', (request, response) => {
     app_param.name = request.param('name');
     app_param.title = 'bros';
+    io.sockets.emit('timer_sync', {timer: 0});
+    timer = 0;
     start_interval_game();
     // response.sendFile(path.join(__dirname, '/static/index.html'));
     response.render(path.join(__dirname, '/static/index.ejs'), app_param);
