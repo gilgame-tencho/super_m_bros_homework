@@ -49,6 +49,7 @@ class CCDM extends ClientCommonDataManager{
     constructor(obj={}){
         super(obj);
         this.players = {};
+        this.enemys = {};
         this.blocks = {};
         this.items = {};
         this.stage = new Stage();
@@ -66,6 +67,7 @@ class CCDM extends ClientCommonDataManager{
     toJSON(){
         return Object.assign(super.toJSON(), {
             players: this.players,
+            enemys: this.enemys,
             blocks: this.blocks,
             items: this.items,
             stage: this.stage,
@@ -210,8 +212,8 @@ class Player extends GameObject{
 
         this.width = BLK;
         this.height = BLK;
-        this.x = BLK * 2;
-        this.y = FIELD_HEIGHT * 0.5 - this.height;
+        // this.x = BLK * 2;
+        // this.y = FIELD_HEIGHT * 0.5 - this.height;
         this.angle = 0;
         this.direction = 'r';  // direction is right:r, left:l;
         this.jampping = 0;
@@ -310,6 +312,44 @@ class Player extends GameObject{
         });
     }
 }
+class Enemy extends Player{
+    constructor(obj={}){
+        super(obj);
+        this.player_type = 'enemy';
+        this.enemy_type = 'kuribo';
+        this.type = 'kuribo';
+        this.direction = 'l';
+        this.sleep = true;
+    }
+    self_move(){
+        if(this.sleep){ return }
+
+        if(!this.move(server_conf.move_speed)){
+            if(this.direction == 'l'){
+                this.direction = 'r';
+            }else{
+                this.direction = 'l';
+            }
+        }
+    }
+    move(distance){
+        const oldX = this.x, oldY = this.y;
+
+        let dis_x = distance * Math.cos(this.angle);
+        let dis_y = distance * Math.sin(this.angle);
+        this.x += dis_x;
+        this.y += dis_y;
+
+        let collision = this.collistion(oldX, oldY, oldViewX);
+        return !collision;
+    }
+    toJSON(){
+        return Object.assign(super.toJSON(), {
+            enemy_type: this.enemy_type,
+            type: this.type,
+        });
+    }
+}
 
 class commonBlock extends PhysicsObject{
     constructor(obj={}){
@@ -321,6 +361,7 @@ class commonBlock extends PhysicsObject{
         this.touched = null;
         this.bounding = false;
         this.effect = false;
+        this.event = false;
     }
     toJSON(){
         return Object.assign(super.toJSON(),{
@@ -329,6 +370,7 @@ class commonBlock extends PhysicsObject{
             touched: this.touched,
             bounding: this.bounding,
             effect: this.effect,
+            event: this.event,
         });
     }
 }
@@ -351,7 +393,7 @@ class hatenaBlock extends commonBlock{
         super(obj);
         this.type = "hatena";
         this.bounding = true;
-        this.effect = 'coin';
+        this.effect = obj.effenct ? obj.effect : 'coin';
     }
 }
 class dokanHeadBlock extends commonBlock{
@@ -374,12 +416,14 @@ class commonItem extends PhysicsObject{
         this.height = BLK * 1;
         this.width = BLK;
         this.touched = null;
+        this.event = false;
     }
     toJSON(){
         return Object.assign(super.toJSON(),{
             type: this.type,
             attr: this.attr,
             touched: this.touched,
+            event: this.event,
         });
     }
 }
@@ -387,6 +431,12 @@ class coinItem extends commonItem{
     constructor(obj={}){
         super(obj);
         this.type = "coin";
+    }
+}
+class mushroomItem extends commonItem{
+    constructor(obj={}){
+        super(obj);
+        this.type = "mushroom";
     }
 }
 class commonEfect extends PhysicsObject{
@@ -490,47 +540,42 @@ class GameMaster{
         ccdm.stage.map.forEach((line)=>{
             y = 0;
             line.forEach((point)=>{
+                let param = {
+                    x: x * BLK,
+                    y: y * BLK,
+                };
                 if(point == 'b'){
-                    let block = new hardBlock({
-                        x: x * BLK,
-                        y: y * BLK,
-                    });
+                    let block = new hardBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
                 if(point == 'n'){
-                    let block = new normalBlock({
-                        x: x * BLK,
-                        y: y * BLK,
-                    });
+                    let block = new normalBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
                 if(point == 'H'){
-                    let block = new hatenaBlock({
-                        x: x * BLK,
-                        y: y * BLK,
-                    });
+                    let block = new hatenaBlock(param);
+                    ccdm.blocks[block.id] = block;
+                }
+                if(point == 'M'){
+                    let block = new hatenaBlock(param);
+                    block.effect = 'mushroom';
                     ccdm.blocks[block.id] = block;
                 }
                 if(point == 'D'){
-                    let block = new dokanHeadBlock({
-                        x: x * BLK,
-                        y: y * BLK,
-                    });
+                    let block = new dokanHeadBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
                 if(point == 'd'){
-                    let block = new dokanBodyBlock({
-                        x: x * BLK,
-                        y: y * BLK,
-                    });
+                    let block = new dokanBodyBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
                 if(point == 'c'){
-                    let item = new coinItem({
-                        x: x * BLK,
-                        y: y * BLK,
-                    });
+                    let item = new coinItem(param);
                     ccdm.items[item.id] = item;
+                }
+                if(point == 'K'){
+                    let enemy = new Enemy(param);
+                    ccdm.enemys[enemy.id] = enemy;
                 }
                 y++;
             });
@@ -551,6 +596,8 @@ io.on('connection', function(socket) {
             nickname: config.nickname,
             id: config.userid,
             END_POINT: ccdm.stage.END_POINT,
+            x: BLK * 2,
+            y: FIELD_HEIGHT * 0.5,
         });
         ccdm.players[player.id] = player;
     });
@@ -571,6 +618,7 @@ io.on('connection', function(socket) {
 const time_max = 30 * 60 * 5;
 let timer = 0;
 const interval_game = () => {
+    // ### chain block ####
     Object.values(ccdm.players).forEach((player) => {
         const movement = player.movement;
         if(movement.forward){
@@ -594,6 +642,30 @@ const interval_game = () => {
         if(movement.down){
         }
     });
+    // ### calculate ####
+    let pieces = Object.assign({}, ccdm.blocks, ccdm.items);
+    Object.values(pieces).forEach((piece)=>{
+        if(!piece.effect || !piece.touched){
+            return
+        }
+        if(piece.effect == 'coin'){
+            logger.debug(`is coin.`);
+            console.log(piece);
+            ccdm.players[piece.touched].menu.coin.v++;
+        }
+        if(piece.effect == 'mushroom'){
+            logger.debug(`is mushroom.`);
+            console.log(piece);
+            let param = {
+                x: piece.x,
+                y: piece.y - BLK,
+            }
+            let item = new mushroomItem(param);
+            ccdm.items[item.id] = item;
+        }
+    });
+
+    // ### send players ####
     io.sockets.emit('state', ccdm);
     io.sockets.emit('menu-frame', ccdm);
     if(timer > time_max){
@@ -601,7 +673,7 @@ const interval_game = () => {
         timer = 0;
     }
 
-    // send after
+    // ### send after ####
     Object.values(ccdm.blocks).forEach((block)=>{
         if(block.bounding && block.touched){
             block.touched = null;

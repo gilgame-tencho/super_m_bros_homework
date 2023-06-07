@@ -31,8 +31,11 @@ images.piece = {
     hatena_f4: $('#img-hatena-block_f4')[0],
 
     coin: $('#img-coin-put')[0],
+    mushroom: $('#img-mushroom')[0],
+
+    kuribo: $('#img-enemy-kuribo')[0],
 }
-images.efect = {
+images.effect = {
     anime: $('#img-coin-anime-front')[0],
     front: $('#img-coin-anime-front')[0],
     c45w: $('#img-coin-anime-45w')[0],
@@ -148,7 +151,7 @@ const self_timer = () => {
     ];
     frame = 2;
     i = Math.floor(timer / frame) % coin.length;
-    // images.efect.anime = images.efect.anime[coin[i]];
+    // images.effect.anime = images.effect.anime[coin[i]];
 
     timer++;
 }
@@ -187,7 +190,11 @@ socket.on('state', function(ccdm) {
     view_reset_middle();
     const MARGIN = ccdm.conf.BLK * 3;
 
-    let pieces = Object.assign(ccdm.blocks, ccdm.items);
+    let pieces = {};
+    Object.assign(pieces, ccdm.blocks);
+    Object.assign(pieces, ccdm.items);
+    Object.assign(pieces, ccdm.enemys);
+
     Object.values(pieces).forEach((piece) => {
         let param = {
             x: piece.x - ccdm.players[MY_USER_ID].view_x,
@@ -198,15 +205,15 @@ socket.on('state', function(ccdm) {
         // bounding -----------------
         if(piece.bounding && piece.touched && !effects.bounding[piece.id]){
             effects.bounding[piece.id] = piece;
-            effects.bounding[piece.id].efect_step = 0;
+            effects.bounding[piece.id].effect_step = 0;
         }
         if(effects.bounding[piece.id]){
-            if(effects.bounding[piece.id].efect_step < 4){
-                param.y -= effects.bounding[piece.id].efect_step * 1;
-                effects.bounding[piece.id].efect_step++;
-            }else if(effects.bounding[piece.id].efect_step < 6){
-                param.y -= (6 - effects.bounding[piece.id].efect_step) * 1;
-                effects.bounding[piece.id].efect_step++;
+            if(effects.bounding[piece.id].effect_step < 4){
+                param.y -= effects.bounding[piece.id].effect_step * 1;
+                effects.bounding[piece.id].effect_step++;
+            }else if(effects.bounding[piece.id].effect_step < 6){
+                param.y -= (6 - effects.bounding[piece.id].effect_step) * 1;
+                effects.bounding[piece.id].effect_step++;
             }else{
                 delete effects.bounding[piece.id];
             }
@@ -214,7 +221,7 @@ socket.on('state', function(ccdm) {
         // effect coin -----------------
         if(piece.effect == 'coin' && piece.touched && !effects.coin[piece.id]){
             effects.coin[piece.id] = piece;
-            effects.coin[piece.id].efect_step = 0;
+            effects.coin[piece.id].effect_step = 0;
             effects.coin[piece.id].y -= 8;
         }
         if(effects.coin[piece.id]){
@@ -224,10 +231,10 @@ socket.on('state', function(ccdm) {
                 'c45w',
             ];
             let coin = effects.coin[piece.id];
-            if(coin.efect_step < 6){
-                coin.y -= coin.efect_step * 1;
-            }else if(coin.efect_step < 12){
-                coin.y -= (12 - coin.efect_step) * 1;
+            if(coin.effect_step < 6){
+                coin.y -= coin.effect_step * 1;
+            }else if(coin.effect_step < 12){
+                coin.y -= (12 - coin.effect_step) * 1;
             }
             let param = {
                 x: coin.x - ccdm.players[MY_USER_ID].view_x,
@@ -235,17 +242,21 @@ socket.on('state', function(ccdm) {
                 width: coin.width,
                 height: coin.height,
             }
-            if(coin.efect_step < 12){
-                console.log("coin.efect_step");
-                console.log(images.efect.anime);
-                let img = coin_img[coin.efect_step % coin_img.length];
-                drawImage(cotxMD, images.efect[img], param);
-                coin.efect_step++
+            if(coin.effect_step < 12){
+                console.log("coin.effect_step");
+                console.log(images.effect.anime);
+                let img = coin_img[coin.effect_step % coin_img.length];
+                drawImage(cotxMD, images.effect[img], param);
+                coin.effect_step++
             }else{
                 delete effects.coin[piece.id];
             }
         }
+        // effect mushroom ------------
 
+        if(piece.sleep){
+            return
+        }
         if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
             drawImage(cotxMD, images.piece[piece.type], param);
         }
