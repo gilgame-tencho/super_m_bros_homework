@@ -248,7 +248,6 @@ class Player extends GameObject{
             this.x = oldX; this.y = oldY;
             this.view_x = oldViewX;
         }
-        this.intersectAreaDead();
         return collision;
     }
     move(distance){
@@ -269,6 +268,9 @@ class Player extends GameObject{
         }
 
         let collision = this.collistion(oldX, oldY, oldViewX);
+
+        this.isDead();
+
         if(!collision){
             Object.keys(ccdm.items).forEach((id)=>{
                 if(ccdm.items[id] && this.intersect(ccdm.items[id])){
@@ -290,8 +292,12 @@ class Player extends GameObject{
             }
         });
     }
-    intersectAreaDead(){
-        let dead_flg = this.y > DEAD_LINE;
+    isDead(){
+        let dead_flg = false;
+        if(this.y > DEAD_LINE){
+            dead_flg = true;
+        }
+
         if(dead_flg){
             this.dead_flg = true;
             this.respone();
@@ -373,9 +379,6 @@ class Enemy extends Player{
     }
     self_move(){
         if(this.sleep){ return }
-        // this.mm++;
-        // if(this.mm < 3){ return }
-        // this.mm = 0;
 
         let speed = Math.floor(server_conf.move_speed / 3);
         if(!this.move(speed)){
@@ -714,7 +717,14 @@ const interval_game = () => {
         if(enemy.x < front_view_x){
             enemy.sleep = false;
         }
+        if(enemy.sleep){ return }
+
         enemy.self_move();
+        Object.values(ccdm.players).forEach((player)=>{
+            if(enemy.intersect(player)){
+                player.respone();
+            }
+        });
     });
     // ### calculate ####
     let pieces = Object.assign({}, ccdm.blocks, ccdm.items);
