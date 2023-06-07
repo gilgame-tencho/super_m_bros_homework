@@ -72,7 +72,14 @@ $(document).on('keydown keyup', (event) => {
         socket.emit('movement', movement);
     }
     if(event.key === ' ' && event.type === 'keydown'){
-        socket.emit('jamp');
+        socket.emit('jump');
+    }
+    if(event.key === 'b'){
+        if(event.type === 'keydown'){
+            socket.emit('dash', true);
+        }else if(event.type === 'keyup'){
+            socket.emit('dash', false);
+        }
     }
 });
 

@@ -195,6 +195,7 @@ class Player extends GameObject{
         this.nickname = obj.nickname;
         this.player_type = 'player';
         this.view_x = 0;
+        this.speed = 1;
         if(obj.id){ this.id = obj.id }
 
         this.menu = {
@@ -242,8 +243,9 @@ class Player extends GameObject{
         const oldX = this.x, oldY = this.y;
         const oldViewX = this.view_x;
 
-        let dis_x = distance * Math.cos(this.angle);
-        let dis_y = distance * Math.sin(this.angle);
+        let range = distance * this.speed;
+        let dis_x = range * Math.cos(this.angle);
+        let dis_y = range * Math.sin(this.angle);
         if(this.x + dis_x <= this.view_x + CENTER){
             this.x += dis_x;
             this.y += dis_y;
@@ -297,6 +299,13 @@ class Player extends GameObject{
                 clearInterval(this.jampping_timer);
             }
         }, 1000/FPS);
+    }
+    dash(sw){
+        if(sw){
+            this.speed = 1 * 1.5;
+        }else{
+            this.speed = 1;
+        }
     }
     remove(){
         delete players[this.id];
@@ -605,8 +614,11 @@ io.on('connection', function(socket) {
         if(!player || player.health===0){return;}
         player.movement = movement;
     });
-    socket.on('jamp', function(){
+    socket.on('jump', function(){
         player.jump();
+    });
+    socket.on('dash', function(sw){
+        player.dash(sw);
     });
     socket.on('disconnect', () => {
         if(!player){return;}
