@@ -177,6 +177,7 @@ socket.on('back-frame', function(ccdm) {
 
 socket.on('menu-frame', function(ccdm) {
     view_reset_front();
+    if(!ccdm.players[MY_USER_ID]){ return }
 
     const mymenu = ccdm.players[MY_USER_ID].menu;
     cotxFT.save();

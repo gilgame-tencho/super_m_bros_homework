@@ -365,21 +365,31 @@ class Enemy extends Player{
         this.player_type = 'enemy';
         this.enemy_type = 'kuribo';
         this.type = 'kuribo';
+        this.angle = Math.PI * 1;
         this.direction = 'l';
+        this.END_POINT = ccdm.stage.END_POINT;
         this.sleep = true;
+        this.mm = 0;
     }
     self_move(){
         if(this.sleep){ return }
+        // this.mm++;
+        // if(this.mm < 3){ return }
+        // this.mm = 0;
 
-        if(!this.move(server_conf.move_speed)){
+        let speed = Math.floor(server_conf.move_speed / 3);
+        if(!this.move(speed)){
             if(this.direction == 'l'){
                 this.direction = 'r';
+                this.angle = Math.PI * 0;
             }else{
                 this.direction = 'l';
+                this.angle = Math.PI * 1;
             }
         }
     }
     move(distance){
+
         const oldX = this.x, oldY = this.y;
 
         let dis_x = distance * Math.cos(this.angle);
@@ -387,8 +397,12 @@ class Enemy extends Player{
         this.x += dis_x;
         this.y += dis_y;
 
-        let collision = this.collistion(oldX, oldY, oldViewX);
+        let collision = this.collistion(oldX, oldY);
+        // logger.debug(`Enemy is move! collision:${collision}`);
+
         return !collision;
+    }
+    respone(){
     }
     toJSON(){
         return Object.assign(super.toJSON(), {
@@ -669,6 +683,7 @@ const time_max = 30 * 60 * 5;
 let timer = 0;
 const interval_game = () => {
     // ### chain block ####
+    let front_view_x = FIELD_WIDTH;
     Object.values(ccdm.players).forEach((player) => {
         const movement = player.movement;
         if(movement.forward){
@@ -691,6 +706,15 @@ const interval_game = () => {
         }
         if(movement.down){
         }
+        if(front_view_x < player.view_x + FIELD_WIDTH){
+            front_view_x = player.view_x + FIELD_WIDTH;
+        }
+    });
+    Object.values(ccdm.enemys).forEach((enemy)=>{
+        if(enemy.x < front_view_x){
+            enemy.sleep = false;
+        }
+        enemy.self_move();
     });
     // ### calculate ####
     let pieces = Object.assign({}, ccdm.blocks, ccdm.items);
