@@ -32,6 +32,8 @@ images.piece = {
 
     coin: $('#img-coin-put')[0],
     mushroom: $('#img-mushroom')[0],
+
+    kuribo: $('#img-enemy-kuribo')[0],
 }
 images.effect = {
     anime: $('#img-coin-anime-front')[0],
@@ -188,7 +190,11 @@ socket.on('state', function(ccdm) {
     view_reset_middle();
     const MARGIN = ccdm.conf.BLK * 3;
 
-    let pieces = Object.assign({}, ccdm.blocks, ccdm.items);
+    let pieces = {};
+    Object.assign(pieces, ccdm.blocks);
+    Object.assign(pieces, ccdm.items);
+    Object.assign(pieces, ccdm.enemys);
+
     Object.values(pieces).forEach((piece) => {
         let param = {
             x: piece.x - ccdm.players[MY_USER_ID].view_x,
@@ -248,6 +254,9 @@ socket.on('state', function(ccdm) {
         }
         // effect mushroom ------------
 
+        if(piece.sleep){
+            return
+        }
         if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
             drawImage(cotxMD, images.piece[piece.type], param);
         }

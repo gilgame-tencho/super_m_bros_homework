@@ -49,6 +49,7 @@ class CCDM extends ClientCommonDataManager{
     constructor(obj={}){
         super(obj);
         this.players = {};
+        this.enemys = {};
         this.blocks = {};
         this.items = {};
         this.stage = new Stage();
@@ -66,6 +67,7 @@ class CCDM extends ClientCommonDataManager{
     toJSON(){
         return Object.assign(super.toJSON(), {
             players: this.players,
+            enemys: this.enemys,
             blocks: this.blocks,
             items: this.items,
             stage: this.stage,
@@ -210,8 +212,8 @@ class Player extends GameObject{
 
         this.width = BLK;
         this.height = BLK;
-        this.x = BLK * 2;
-        this.y = FIELD_HEIGHT * 0.5 - this.height;
+        // this.x = BLK * 2;
+        // this.y = FIELD_HEIGHT * 0.5 - this.height;
         this.angle = 0;
         this.direction = 'r';  // direction is right:r, left:l;
         this.jampping = 0;
@@ -307,6 +309,44 @@ class Player extends GameObject{
             player_type: this.player_type,
             view_x: this.view_x,
             menu: this.menu,
+        });
+    }
+}
+class Enemy extends Player{
+    constructor(obj={}){
+        super(obj);
+        this.player_type = 'enemy';
+        this.enemy_type = 'kuribo';
+        this.type = 'kuribo';
+        this.direction = 'l';
+        this.sleep = true;
+    }
+    self_move(){
+        if(this.sleep){ return }
+
+        if(!this.move(server_conf.move_speed)){
+            if(this.direction == 'l'){
+                this.direction = 'r';
+            }else{
+                this.direction = 'l';
+            }
+        }
+    }
+    move(distance){
+        const oldX = this.x, oldY = this.y;
+
+        let dis_x = distance * Math.cos(this.angle);
+        let dis_y = distance * Math.sin(this.angle);
+        this.x += dis_x;
+        this.y += dis_y;
+
+        let collision = this.collistion(oldX, oldY, oldViewX);
+        return !collision;
+    }
+    toJSON(){
+        return Object.assign(super.toJSON(), {
+            enemy_type: this.enemy_type,
+            type: this.type,
         });
     }
 }
@@ -533,6 +573,10 @@ class GameMaster{
                     let item = new coinItem(param);
                     ccdm.items[item.id] = item;
                 }
+                if(point == 'K'){
+                    let enemy = new Enemy(param);
+                    ccdm.enemys[enemy.id] = enemy;
+                }
                 y++;
             });
             x++;
@@ -552,6 +596,8 @@ io.on('connection', function(socket) {
             nickname: config.nickname,
             id: config.userid,
             END_POINT: ccdm.stage.END_POINT,
+            x: BLK * 2,
+            y: FIELD_HEIGHT * 0.5,
         });
         ccdm.players[player.id] = player;
     });
