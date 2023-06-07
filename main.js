@@ -682,7 +682,9 @@ const interval_game = () => {
     timer++;
 }
 
+let started_game = false;
 function start_interval_game(){
+    started_game = true;
     setInterval(interval_game, 1000/FPS);
 }
 
@@ -698,7 +700,9 @@ app.get('/', (request, response) => {
     app_param.title = 'bros';
     io.sockets.emit('timer_sync', {timer: 0});
     timer = 0;
-    start_interval_game();
+    if(!started_game){
+        start_interval_game();
+    }
     // response.sendFile(path.join(__dirname, '/static/index.html'));
     response.render(path.join(__dirname, '/static/index.ejs'), app_param);
 });
