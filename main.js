@@ -24,6 +24,8 @@ const FIELD_WIDTH = server_conf.FIELD_WIDTH;
 const FIELD_HEIGHT = server_conf.FIELD_HEIGHT;
 const FPS = server_conf.FPS;
 const BLK = server_conf.BLOCK;
+const DEAD_LINE = FIELD_HEIGHT + BLK * 1;
+const DEAD_END = FIELD_HEIGHT + BLK * 3;
 const MAX_HEIGHT = FIELD_HEIGHT / BLK - 1;
 const MAX_WIDTH = FIELD_WIDTH / BLK;
 const CENTER = server_conf.CENTER;
@@ -132,7 +134,7 @@ class GameObject extends PhysicsObject{
     }
     collistion(oldX, oldY){
         let collision = false;
-        if(this.x < 0 || this.x + this.width >= this.END_POINT || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
+        if(this.intersectField()){
                 collision = true;
         }
         if(this.intersectBlock()){
@@ -179,6 +181,14 @@ class GameObject extends PhysicsObject{
                 return true;
             }
         });
+    }
+    intersectField(){
+        return (
+            this.x < 0 ||
+            this.x + this.width >= this.END_POINT ||
+            this.y < 0 ||
+            this.y + this.height >= DEAD_END
+        )
     }
     toJSON(){
         return Object.assign(super.toJSON(), {
@@ -227,7 +237,7 @@ class Player extends GameObject{
     }
     collistion(oldX, oldY, oldViewX=this.view_x){
         let collision = false;
-        if(this.x < 0 || this.x + this.width >= this.END_POINT || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
+        if(this.intersectField()){
                 collision = true;
         }
         if(this.intersectBlock(oldX, oldY)){
