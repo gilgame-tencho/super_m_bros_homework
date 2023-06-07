@@ -196,6 +196,10 @@ socket.on('menu-frame', function(ccdm) {
 socket.on('state', function(ccdm) {
     view_reset_middle();
     const MARGIN = ccdm.conf.BLK * 3;
+    let VIEW_X = 0;
+    if(ccdm.players[MY_USER_ID]){
+        VIEW_X = ccdm.players[MY_USER_ID].view_x;
+    }
 
     let pieces = {};
     Object.assign(pieces, ccdm.blocks);
@@ -204,7 +208,7 @@ socket.on('state', function(ccdm) {
 
     Object.values(pieces).forEach((piece) => {
         let param = {
-            x: piece.x - ccdm.players[MY_USER_ID].view_x,
+            x: piece.x - VIEW_X,
             y: piece.y,
             width: piece.width,
             height: piece.height,
@@ -244,7 +248,7 @@ socket.on('state', function(ccdm) {
                 coin.y -= (12 - coin.effect_step) * 1;
             }
             let param = {
-                x: coin.x - ccdm.players[MY_USER_ID].view_x,
+                x: coin.x - VIEW_X,
                 y: coin.y,
                 width: coin.width,
                 height: coin.height,
@@ -271,7 +275,7 @@ socket.on('state', function(ccdm) {
     Object.values(ccdm.players).forEach((player) => {
         let img = images.player[player.direction];
         let param = {
-            x: player.x - ccdm.players[MY_USER_ID].view_x,
+            x: player.x - VIEW_X,
             y: player.y,
             width: player.width,
             height: player.height,

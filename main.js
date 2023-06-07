@@ -206,6 +206,7 @@ class Player extends GameObject{
         this.player_type = 'player';
         this.view_x = 0;
         this.speed = 1;
+        this.dead_flg = false;
         if(obj.id){ this.id = obj.id }
 
         this.menu = {
@@ -247,9 +248,11 @@ class Player extends GameObject{
             this.x = oldX; this.y = oldY;
             this.view_x = oldViewX;
         }
+        this.intersectAreaDead();
         return collision;
     }
     move(distance){
+        // if(this.dead_flg){ return };
         const oldX = this.x, oldY = this.y;
         const oldViewX = this.view_x;
 
@@ -287,6 +290,13 @@ class Player extends GameObject{
             }
         });
     }
+    intersectAreaDead(){
+        let dead_flg = this.y > DEAD_LINE;
+        if(dead_flg){
+            this.dead_flg = true;
+            this.respone();
+        }
+    }
     fall(distance){
         this.flg_fly = super.fall(distance);
         return this.flg_fly;
@@ -321,6 +331,23 @@ class Player extends GameObject{
         delete players[this.id];
         io.to(this.socketId).emit('dead');
     }
+    respone(){
+        // delete ccdm.players[this.id];
+        this.x = BLK * 2;
+        this.y = FIELD_HEIGHT * 0.5;
+        this.view_x = 0;
+        this.dead_flg = false;
+
+        // let player = new Player({
+        //     socketId: this.id,
+        //     nickname: this.nickname,
+        //     id: this.id,
+        //     END_POINT: ccdm.stage.END_POINT,
+        //     x: BLK * 2,
+        //     y: FIELD_HEIGHT * 0.5,
+        // });
+        // ccdm.players[player.id] = player;
+    }
     toJSON(){
         return Object.assign(super.toJSON(), {
             socketId: this.socketId,
@@ -328,6 +355,7 @@ class Player extends GameObject{
             player_type: this.player_type,
             view_x: this.view_x,
             menu: this.menu,
+            dead_flg: this.dead_flg,
         });
     }
 }
