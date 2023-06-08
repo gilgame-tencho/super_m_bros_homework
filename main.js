@@ -55,6 +55,7 @@ class CCDM extends ClientCommonDataManager{
         this.blocks = {};
         this.items = {};
         this.stage = new Stage();
+        this.goal = null;
         this.conf = {
             SERVER_NAME: SERVER_NAME,
             FIELD_WIDTH: FIELD_WIDTH,
@@ -74,6 +75,7 @@ class CCDM extends ClientCommonDataManager{
             items: this.items,
             stage: this.stage,
             conf: this.conf,
+            goal: this.goal,
         });
     }
 }
@@ -460,6 +462,25 @@ class hatenaBlock extends commonBlock{
         this.effect = obj.effenct ? obj.effect : 'coin';
     }
 }
+class goalBlock extends commonBlock{
+    constructor(obj={}){
+        super(obj);
+        this.type = "goal";
+        this.height = BLK * 1;
+        this.top = 1;
+        this.flag = 1;
+        this.pole = 9;
+        this.block = 1;
+    }
+    toJSON(){
+        return Object.assign(super.toJSON(), {
+            top: this.top,
+            flag: this.flag,
+            pole: this.pole,
+            block: this.block,
+        });
+    }
+}
 class dokanHeadBlock extends commonBlock{
     constructor(obj={}){
         super(obj);
@@ -601,6 +622,7 @@ class GameMaster{
     create_stage(){
         let x = 0;
         let y = 0;
+        let goal_flg = false;
         ccdm.stage.map.forEach((line)=>{
             y = 0;
             line.forEach((point)=>{
@@ -608,38 +630,43 @@ class GameMaster{
                     x: x * BLK,
                     y: y * BLK,
                 };
-                if(point == 'b'){
+                if(point === 'b'){
                     let block = new hardBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
-                if(point == 'n'){
+                if(point === 'n'){
                     let block = new normalBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
-                if(point == 'H'){
+                if(point === 'H'){
                     let block = new hatenaBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
-                if(point == 'M'){
+                if(point === 'M'){
                     let block = new hatenaBlock(param);
                     block.effect = 'mushroom';
                     ccdm.blocks[block.id] = block;
                 }
-                if(point == 'D'){
+                if(point === 'D'){
                     let block = new dokanHeadBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
-                if(point == 'd'){
+                if(point === 'd'){
                     let block = new dokanBodyBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
-                if(point == 'c'){
+                if(point === 'c'){
                     let item = new coinItem(param);
                     ccdm.items[item.id] = item;
                 }
-                if(point == 'K'){
+                if(point === 'K'){
                     let enemy = new Enemy(param);
                     ccdm.enemys[enemy.id] = enemy;
+                }
+                if(point === 'G' && !ccdm.goal){
+                    goal_flg = true;
+                    let goal = new goalBlock(param);
+                    ccdm.goal = goal;
                 }
                 y++;
             });

@@ -42,6 +42,11 @@ images.effect = {
     c45u: $('#img-coin-anime-45u')[0],
     yoko: $('#img-coin-anime-yoko')[0],
 }
+images.goal = {
+    top: $('#img-goal-top')[0],
+    flag: $('#img-goal-flag')[0],
+    pole: $('#img-goal-pole')[0],
+}
 
 const MY_USER_ID = Math.floor(Math.random()*1000000000);
 function gameStart(){
@@ -129,6 +134,10 @@ function debug_show_object_line(cotx, obj){
     cotx.rect(obj.x, obj.y, obj.width, obj.height);
     cotx.stroke();
     cotx.restore();
+}
+
+function is_draw(obj, MARGIN, FIELD_WIDTH){
+    return (-MARGIN < obj.x && obj.x < FIELD_WIDTH + MARGIN)
 }
 
 // init -----
@@ -269,7 +278,7 @@ socket.on('state', function(ccdm) {
         if(piece.sleep){
             return
         }
-        if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
+        if(is_draw(param, MARGIN, ccdm.conf.FIELD_WIDTH)){
             drawImage(cotxMD, images.piece[piece.type], param);
         }
     });
@@ -281,7 +290,7 @@ socket.on('state', function(ccdm) {
             width: player.width,
             height: player.height,
         }
-        if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
+        if(is_draw(param, MARGIN, ccdm.conf.FIELD_WIDTH)){
             drawImage(cotxMD, img, param);
             // debug_show_object_line(cotxMD, player);
 
@@ -293,6 +302,26 @@ socket.on('state', function(ccdm) {
             }
         }
     });
+    let goal = ccdm.goal;
+    goal.x = goal.x - VIEW_X;
+    if(is_draw(goal, MARGIN, ccdm.conf.FIELD_WIDTH)){
+        let param = {
+            x: goal.x,
+            y: goal.y,
+            width: goal.width,
+            height: goal.height,
+        }
+        drawImage(cotxMD, images.goal.top, param);
+        for(let i=0; i<goal.pole; i++){
+            param.y += ccdm.conf.BLK;
+            drawImage(cotxMD, images.goal.pole, param);
+            if(i==0){
+                drawImage(cotxMD, images.goal.flag, param);
+            }
+        }
+        param.y += ccdm.conf.BLK;
+        drawImage(cotxMD, images.piece.normal, param);
+    }
 });
 
 socket.on('dead', () => {
