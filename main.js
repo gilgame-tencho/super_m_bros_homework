@@ -746,6 +746,11 @@ const interval_game = () => {
         }
         if(movement.down){
         }
+        if(movement.dash){
+            player.dash(true);
+        }else{
+            player.dash(false);
+        }
 
         // frame
         player.frame();
