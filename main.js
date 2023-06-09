@@ -230,6 +230,7 @@ class Player extends GameObject{
         this.angle = 0;
         this.direction = 'r';  // direction is right:r, left:l;
         this.jampping = 0;
+        this.jump_count = 0;
         this.flg_fly = true;
         this.cmd_his = []; //command history. FIFO.
         for(let i=0; i<CMD_HIS; i++){
@@ -238,18 +239,10 @@ class Player extends GameObject{
     }
     command(param){
         this.movement = param;
-        if(param){
-            // Object.assign(this.cmd_his[CMD_HIS - 1], param);
-            // Object.keys(param).forEach((key)=>{
-            //     this.cmd_his[CMD_HIS - 1][key] = true;
-            // });
-        }
-        // return this.cmd_his[CMD_HIS - 1];
     }
     frame(){
-        // let command = this.command();
         let command = this.movement;
-        console.log(this.cmd_his);
+        // console.log(this.cmd_his);
         // movement
         if(command.forward){
             this.move(server_conf.move_speed);
@@ -281,6 +274,8 @@ class Player extends GameObject{
 
         if(command.jump){
             this.jump();
+        }else{
+            this.jump_count = 0;
         }
         if(this.jampping > 0){
             this.hopping();
@@ -366,10 +361,23 @@ class Player extends GameObject{
         return this.flg_fly;
     }
     jump(){
-        if(this.jampping > 0 || this.flg_fly){ return }
-
-        this.flg_fly = true;
-        this.jampping = server_conf.jamp_power * BLK;
+        if(this.jampping <= 0 && !this.flg_fly && this.jump_count == 0){
+            this.flg_fly = true;
+            this.jampping = 2 * BLK;
+            this.jump_count = 1;
+        }else if( this.jump_count == 1){
+            this.jump_count = 2;
+        }else if( this.jump_count == 2){
+            this.jampping += 1.5 * BLK;
+            this.jump_count = 3;
+        }else if( this.jump_count == 3){
+            this.jump_count = 4;
+        }else if( this.jump_count == 4){
+            this.jampping += 1.5 * BLK;
+            this.jump_count = 5;
+        }else{
+            this.jump_count = 0;
+        }
     }
     hopping(){
         if(this.rise(server_conf.jamp_speed)){
@@ -736,12 +744,10 @@ io.on('connection', function(socket) {
         ccdm.players[player.id] = player;
     });
     socket.on('movement', function(movement) {
-        // if(!player || player.health===0){return;}
         player.movement = movement;
         player.command(movement);
     });
     socket.on('jump', function(){
-        // player.jump();
         player.command({jump:true});
     });
     socket.on('disconnect', () => {
