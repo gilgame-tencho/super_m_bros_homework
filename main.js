@@ -342,16 +342,6 @@ class Player extends GameObject{
         this.y = FIELD_HEIGHT * 0.5;
         this.view_x = 0;
         this.dead_flg = false;
-
-        // let player = new Player({
-        //     socketId: this.id,
-        //     nickname: this.nickname,
-        //     id: this.id,
-        //     END_POINT: ccdm.stage.END_POINT,
-        //     x: BLK * 2,
-        //     y: FIELD_HEIGHT * 0.5,
-        // });
-        // ccdm.players[player.id] = player;
     }
     toJSON(){
         return Object.assign(super.toJSON(), {
