@@ -42,6 +42,11 @@ images.effect = {
     c45u: $('#img-coin-anime-45u')[0],
     yoko: $('#img-coin-anime-yoko')[0],
 }
+images.goal = {
+    top: $('#img-goal-top')[0],
+    flag: $('#img-goal-flag')[0],
+    pole: $('#img-goal-pole')[0],
+}
 
 const MY_USER_ID = Math.floor(Math.random()*1000000000);
 function gameStart(){
@@ -61,6 +66,8 @@ $(document).on('keydown keyup', (event) => {
         'ArrowDown': 'down',
         'ArrowLeft': 'left',
         'ArrowRight': 'right',
+        'b': 'dash',
+        ' ': 'jump',
     };
     const command = KeyToCommand[event.key];
     if(command){
@@ -71,9 +78,10 @@ $(document).on('keydown keyup', (event) => {
         }
         socket.emit('movement', movement);
     }
-    if(event.key === ' ' && event.type === 'keydown'){
-        socket.emit('jamp');
-    }
+    // if(event.key === ' ' && event.type === 'keydown'){
+    //     // socket.emit('jump');
+    //     movement['jump'] = true;
+    // }
 });
 
 function drawImage(ctt, img, px, py=null, pw=null, ph=null){
@@ -124,6 +132,10 @@ function debug_show_object_line(cotx, obj){
     cotx.restore();
 }
 
+function is_draw(obj, MARGIN, FIELD_WIDTH){
+    return (-MARGIN < obj.x && obj.x < FIELD_WIDTH + MARGIN)
+}
+
 // init -----
 view_reset_all();
 
@@ -170,6 +182,7 @@ socket.on('back-frame', function(ccdm) {
 
 socket.on('menu-frame', function(ccdm) {
     view_reset_front();
+    if(!ccdm.players[MY_USER_ID]){ return }
 
     const mymenu = ccdm.players[MY_USER_ID].menu;
     cotxFT.save();
@@ -189,6 +202,10 @@ socket.on('menu-frame', function(ccdm) {
 socket.on('state', function(ccdm) {
     view_reset_middle();
     const MARGIN = ccdm.conf.BLK * 3;
+    let VIEW_X = 0;
+    if(ccdm.players[MY_USER_ID]){
+        VIEW_X = ccdm.players[MY_USER_ID].view_x;
+    }
 
     let pieces = {};
     Object.assign(pieces, ccdm.blocks);
@@ -197,7 +214,7 @@ socket.on('state', function(ccdm) {
 
     Object.values(pieces).forEach((piece) => {
         let param = {
-            x: piece.x - ccdm.players[MY_USER_ID].view_x,
+            x: piece.x - VIEW_X,
             y: piece.y,
             width: piece.width,
             height: piece.height,
@@ -237,7 +254,7 @@ socket.on('state', function(ccdm) {
                 coin.y -= (12 - coin.effect_step) * 1;
             }
             let param = {
-                x: coin.x - ccdm.players[MY_USER_ID].view_x,
+                x: coin.x - VIEW_X,
                 y: coin.y,
                 width: coin.width,
                 height: coin.height,
@@ -257,19 +274,19 @@ socket.on('state', function(ccdm) {
         if(piece.sleep){
             return
         }
-        if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
+        if(is_draw(param, MARGIN, ccdm.conf.FIELD_WIDTH)){
             drawImage(cotxMD, images.piece[piece.type], param);
         }
     });
     Object.values(ccdm.players).forEach((player) => {
         let img = images.player[player.direction];
         let param = {
-            x: player.x - ccdm.players[MY_USER_ID].view_x,
+            x: player.x - VIEW_X,
             y: player.y,
             width: player.width,
             height: player.height,
         }
-        if(-MARGIN < param.x && param.x < ccdm.conf.FIELD_WIDTH + MARGIN ){
+        if(is_draw(param, MARGIN, ccdm.conf.FIELD_WIDTH)){
             drawImage(cotxMD, img, param);
             // debug_show_object_line(cotxMD, player);
 
@@ -281,6 +298,26 @@ socket.on('state', function(ccdm) {
             }
         }
     });
+    let goal = ccdm.goal;
+    goal.x = goal.x - VIEW_X;
+    if(is_draw(goal, MARGIN, ccdm.conf.FIELD_WIDTH)){
+        let param = {
+            x: goal.x,
+            y: goal.y,
+            width: goal.width,
+            height: goal.height,
+        }
+        drawImage(cotxMD, images.goal.top, param);
+        for(let i=0; i<goal.pole; i++){
+            param.y += ccdm.conf.BLK;
+            drawImage(cotxMD, images.goal.pole, param);
+            if(i==0){
+                drawImage(cotxMD, images.goal.flag, param);
+            }
+        }
+        param.y += ccdm.conf.BLK;
+        drawImage(cotxMD, images.piece.normal, param);
+    }
 });
 
 socket.on('dead', () => {

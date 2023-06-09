@@ -24,9 +24,12 @@ const FIELD_WIDTH = server_conf.FIELD_WIDTH;
 const FIELD_HEIGHT = server_conf.FIELD_HEIGHT;
 const FPS = server_conf.FPS;
 const BLK = server_conf.BLOCK;
+const DEAD_LINE = FIELD_HEIGHT + BLK * 1;
+const DEAD_END = FIELD_HEIGHT + BLK * 3;
 const MAX_HEIGHT = FIELD_HEIGHT / BLK - 1;
 const MAX_WIDTH = FIELD_WIDTH / BLK;
 const CENTER = server_conf.CENTER;
+const CMD_HIS = 5;
 
 const logger = STANDERD.logger({
     server_name: SERVER_NAME,
@@ -53,6 +56,7 @@ class CCDM extends ClientCommonDataManager{
         this.blocks = {};
         this.items = {};
         this.stage = new Stage();
+        this.goal = null;
         this.conf = {
             SERVER_NAME: SERVER_NAME,
             FIELD_WIDTH: FIELD_WIDTH,
@@ -72,6 +76,7 @@ class CCDM extends ClientCommonDataManager{
             items: this.items,
             stage: this.stage,
             conf: this.conf,
+            goal: this.goal,
         });
     }
 }
@@ -132,7 +137,7 @@ class GameObject extends PhysicsObject{
     }
     collistion(oldX, oldY){
         let collision = false;
-        if(this.x < 0 || this.x + this.width >= this.END_POINT || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
+        if(this.intersectField()){
                 collision = true;
         }
         if(this.intersectBlock()){
@@ -180,6 +185,14 @@ class GameObject extends PhysicsObject{
             }
         });
     }
+    intersectField(){
+        return (
+            this.x < 0 ||
+            this.x + this.width >= this.END_POINT ||
+            this.y < 0 ||
+            this.y + this.height >= DEAD_END
+        )
+    }
     toJSON(){
         return Object.assign(super.toJSON(), {
             angle: this.angle,
@@ -195,6 +208,8 @@ class Player extends GameObject{
         this.nickname = obj.nickname;
         this.player_type = 'player';
         this.view_x = 0;
+        this.speed = 1;
+        this.dead_flg = false;
         if(obj.id){ this.id = obj.id }
 
         this.menu = {
@@ -212,21 +227,71 @@ class Player extends GameObject{
 
         this.width = BLK;
         this.height = BLK;
-        // this.x = BLK * 2;
-        // this.y = FIELD_HEIGHT * 0.5 - this.height;
         this.angle = 0;
         this.direction = 'r';  // direction is right:r, left:l;
         this.jampping = 0;
+        this.jump_count = 0;
         this.flg_fly = true;
+        this.cmd_his = []; //command history. FIFO.
+        for(let i=0; i<CMD_HIS; i++){
+            this.cmd_his.push({});
+        }
+    }
+    command(param){
+        this.movement = param;
+    }
+    frame(){
+        let command = this.movement;
+        // console.log(this.cmd_his);
+        // movement
+        if(command.forward){
+            this.move(server_conf.move_speed);
+        }
+        if(command.back){
+            this.move(-server_conf.move_speed);
+        }
+        if(command.left){
+            this.angle = Math.PI * 1;
+            this.direction = 'l';
+            this.move(server_conf.move_speed);
+        }
+        if(command.right){
+            this.angle = Math.PI * 0;
+            this.direction = 'r';
+            this.move(server_conf.move_speed);
+        }
+        if(command.up){
+        }
+        if(command.down){
+        }
 
-        this.gravity_func = ()=>{
+        // dash
+        if(command.dash){
+            this.dash(true);
+        }else{
+            this.dash(false);
+        }
+
+        if(command.jump){
+            this.jump();
+        }else{
+            this.jump_count = 0;
+        }
+        if(this.jampping > 0){
+            this.hopping();
+        }else{
             this.fall(server_conf.fall_speed);
         }
-        this.gravity_timer = setInterval(this.gravity_func, 1000/FPS);
+
+        // command reflesh.
+        this.cmd_his.push(command);
+        if(this.cmd_his.length > CMD_HIS){
+            this.cmd_his.shift();
+        }
     }
     collistion(oldX, oldY, oldViewX=this.view_x){
         let collision = false;
-        if(this.x < 0 || this.x + this.width >= this.END_POINT || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
+        if(this.intersectField()){
                 collision = true;
         }
         if(this.intersectBlock(oldX, oldY)){
@@ -239,11 +304,13 @@ class Player extends GameObject{
         return collision;
     }
     move(distance){
+        // if(this.dead_flg){ return };
         const oldX = this.x, oldY = this.y;
         const oldViewX = this.view_x;
 
-        let dis_x = distance * Math.cos(this.angle);
-        let dis_y = distance * Math.sin(this.angle);
+        let range = distance * this.speed;
+        let dis_x = range * Math.cos(this.angle);
+        let dis_y = range * Math.sin(this.angle);
         if(this.x + dis_x <= this.view_x + CENTER){
             this.x += dis_x;
             this.y += dis_y;
@@ -254,6 +321,9 @@ class Player extends GameObject{
         }
 
         let collision = this.collistion(oldX, oldY, oldViewX);
+
+        this.isDead();
+
         if(!collision){
             Object.keys(ccdm.items).forEach((id)=>{
                 if(ccdm.items[id] && this.intersect(ccdm.items[id])){
@@ -275,32 +345,67 @@ class Player extends GameObject{
             }
         });
     }
+    isDead(){
+        let dead_flg = false;
+        if(this.y > DEAD_LINE){
+            dead_flg = true;
+        }
+
+        if(dead_flg){
+            this.dead_flg = true;
+            this.respone();
+        }
+    }
     fall(distance){
         this.flg_fly = super.fall(distance);
         return this.flg_fly;
     }
     jump(){
-        if(this.jampping > 0 || this.flg_fly){ return }
-
-        this.flg_fly = true;
-        this.jampping = server_conf.jamp_power * BLK;
-        clearInterval(this.gravity_timer);
-        this.jampping_timer = setInterval(()=>{
-            if(this.rise(server_conf.jamp_speed)){
-                this.jampping -= server_conf.jamp_speed;
-            }else{
-                this.jampping = 0;
-            }
-            if(this.jampping <= 0){
-                this.jampping = 0;
-                this.gravity_timer = setInterval(this.gravity_func, 1000/FPS);
-                clearInterval(this.jampping_timer);
-            }
-        }, 1000/FPS);
+        if(this.jampping <= 0 && !this.flg_fly && this.jump_count == 0){
+            this.flg_fly = true;
+            this.jampping = 2 * BLK;
+            this.jump_count = 1;
+        }else if( this.jump_count == 1){
+            this.jump_count = 2;
+        }else if( this.jump_count == 2){
+            this.jampping += 1.5 * BLK;
+            this.jump_count = 3;
+        }else if( this.jump_count == 3){
+            this.jump_count = 4;
+        }else if( this.jump_count == 4){
+            this.jampping += 1.5 * BLK;
+            this.jump_count = 5;
+        }else{
+            this.jump_count = 0;
+        }
+    }
+    hopping(){
+        if(this.rise(server_conf.jamp_speed)){
+            this.jampping -= server_conf.jamp_speed;
+        }else{
+            this.jampping = 0;
+        }
+        if(this.jampping <= 0){
+            this.jampping = 0;
+        }
+    }
+    dash(sw){
+        if(sw){
+            this.speed = 1 * 1.5;
+        }else{
+            this.speed = 1;
+        }
     }
     remove(){
         delete players[this.id];
         io.to(this.socketId).emit('dead');
+    }
+    respone(){
+        // delete ccdm.players[this.id];
+        this.x = BLK * 2;
+        this.y = FIELD_HEIGHT * 0.5;
+        this.view_x = 0;
+        this.dead_flg = false;
     }
     toJSON(){
         return Object.assign(super.toJSON(), {
@@ -309,6 +414,7 @@ class Player extends GameObject{
             player_type: this.player_type,
             view_x: this.view_x,
             menu: this.menu,
+            dead_flg: this.dead_flg,
         });
     }
 }
@@ -318,21 +424,28 @@ class Enemy extends Player{
         this.player_type = 'enemy';
         this.enemy_type = 'kuribo';
         this.type = 'kuribo';
+        this.angle = Math.PI * 1;
         this.direction = 'l';
+        this.END_POINT = ccdm.stage.END_POINT;
         this.sleep = true;
+        this.mm = 0;
     }
     self_move(){
         if(this.sleep){ return }
 
-        if(!this.move(server_conf.move_speed)){
+        let speed = Math.floor(server_conf.move_speed / 3);
+        if(!this.move(speed)){
             if(this.direction == 'l'){
                 this.direction = 'r';
+                this.angle = Math.PI * 0;
             }else{
                 this.direction = 'l';
+                this.angle = Math.PI * 1;
             }
         }
     }
     move(distance){
+
         const oldX = this.x, oldY = this.y;
 
         let dis_x = distance * Math.cos(this.angle);
@@ -340,8 +453,12 @@ class Enemy extends Player{
         this.x += dis_x;
         this.y += dis_y;
 
-        let collision = this.collistion(oldX, oldY, oldViewX);
+        let collision = this.collistion(oldX, oldY);
+        // logger.debug(`Enemy is move! collision:${collision}`);
+
         return !collision;
+    }
+    respone(){
     }
     toJSON(){
         return Object.assign(super.toJSON(), {
@@ -394,6 +511,25 @@ class hatenaBlock extends commonBlock{
         this.type = "hatena";
         this.bounding = true;
         this.effect = obj.effenct ? obj.effect : 'coin';
+    }
+}
+class goalBlock extends commonBlock{
+    constructor(obj={}){
+        super(obj);
+        this.type = "goal";
+        this.height = BLK * 1;
+        this.top = 1;
+        this.flag = 1;
+        this.pole = 9;
+        this.block = 1;
+    }
+    toJSON(){
+        return Object.assign(super.toJSON(), {
+            top: this.top,
+            flag: this.flag,
+            pole: this.pole,
+            block: this.block,
+        });
     }
 }
 class dokanHeadBlock extends commonBlock{
@@ -537,6 +673,7 @@ class GameMaster{
     create_stage(){
         let x = 0;
         let y = 0;
+        let goal_flg = false;
         ccdm.stage.map.forEach((line)=>{
             y = 0;
             line.forEach((point)=>{
@@ -544,38 +681,43 @@ class GameMaster{
                     x: x * BLK,
                     y: y * BLK,
                 };
-                if(point == 'b'){
+                if(point === 'b'){
                     let block = new hardBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
-                if(point == 'n'){
+                if(point === 'n'){
                     let block = new normalBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
-                if(point == 'H'){
+                if(point === 'H'){
                     let block = new hatenaBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
-                if(point == 'M'){
+                if(point === 'M'){
                     let block = new hatenaBlock(param);
                     block.effect = 'mushroom';
                     ccdm.blocks[block.id] = block;
                 }
-                if(point == 'D'){
+                if(point === 'D'){
                     let block = new dokanHeadBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
-                if(point == 'd'){
+                if(point === 'd'){
                     let block = new dokanBodyBlock(param);
                     ccdm.blocks[block.id] = block;
                 }
-                if(point == 'c'){
+                if(point === 'c'){
                     let item = new coinItem(param);
                     ccdm.items[item.id] = item;
                 }
-                if(point == 'K'){
+                if(point === 'K'){
                     let enemy = new Enemy(param);
                     ccdm.enemys[enemy.id] = enemy;
+                }
+                if(point === 'G' && !ccdm.goal){
+                    goal_flg = true;
+                    let goal = new goalBlock(param);
+                    ccdm.goal = goal;
                 }
                 y++;
             });
@@ -602,11 +744,11 @@ io.on('connection', function(socket) {
         ccdm.players[player.id] = player;
     });
     socket.on('movement', function(movement) {
-        if(!player || player.health===0){return;}
         player.movement = movement;
+        player.command(movement);
     });
-    socket.on('jamp', function(){
-        player.jump();
+    socket.on('jump', function(){
+        player.command({jump:true});
     });
     socket.on('disconnect', () => {
         if(!player){return;}
@@ -619,28 +761,27 @@ const time_max = 30 * 60 * 5;
 let timer = 0;
 const interval_game = () => {
     // ### chain block ####
+    let front_view_x = FIELD_WIDTH;
     Object.values(ccdm.players).forEach((player) => {
-        const movement = player.movement;
-        if(movement.forward){
-            player.move(server_conf.move_speed);
+        // frame
+        player.frame();
+
+        if(front_view_x < player.view_x + FIELD_WIDTH){
+            front_view_x = player.view_x + FIELD_WIDTH;
         }
-        if(movement.back){
-            player.move(-server_conf.move_speed);
+    });
+    Object.values(ccdm.enemys).forEach((enemy)=>{
+        if(enemy.x < front_view_x){
+            enemy.sleep = false;
         }
-        if(movement.left){
-            player.angle = Math.PI * 1;
-            player.direction = 'l';
-            player.move(server_conf.move_speed);
-        }
-        if(movement.right){
-            player.angle = Math.PI * 0;
-            player.direction = 'r';
-            player.move(server_conf.move_speed);
-        }
-        if(movement.up){
-        }
-        if(movement.down){
-        }
+        if(enemy.sleep){ return }
+
+        enemy.self_move();
+        Object.values(ccdm.players).forEach((player)=>{
+            if(enemy.intersect(player)){
+                player.respone();
+            }
+        });
     });
     // ### calculate ####
     let pieces = Object.assign({}, ccdm.blocks, ccdm.items);
