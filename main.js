@@ -226,17 +226,17 @@ class Player extends GameObject{
 
         this.width = BLK;
         this.height = BLK;
-        // this.x = BLK * 2;
-        // this.y = FIELD_HEIGHT * 0.5 - this.height;
         this.angle = 0;
         this.direction = 'r';  // direction is right:r, left:l;
         this.jampping = 0;
         this.flg_fly = true;
-
-        this.gravity_func = ()=>{
+    }
+    frame(){
+        if(this.jampping > 0){
+            this.hopping();
+        }else{
             this.fall(server_conf.fall_speed);
         }
-        this.gravity_timer = setInterval(this.gravity_func, 1000/FPS);
     }
     collistion(oldX, oldY, oldViewX=this.view_x){
         let collision = false;
@@ -314,19 +314,16 @@ class Player extends GameObject{
 
         this.flg_fly = true;
         this.jampping = server_conf.jamp_power * BLK;
-        clearInterval(this.gravity_timer);
-        this.jampping_timer = setInterval(()=>{
-            if(this.rise(server_conf.jamp_speed)){
-                this.jampping -= server_conf.jamp_speed;
-            }else{
-                this.jampping = 0;
-            }
-            if(this.jampping <= 0){
-                this.jampping = 0;
-                this.gravity_timer = setInterval(this.gravity_func, 1000/FPS);
-                clearInterval(this.jampping_timer);
-            }
-        }, 1000/FPS);
+    }
+    hopping(){
+        if(this.rise(server_conf.jamp_speed)){
+            this.jampping -= server_conf.jamp_speed;
+        }else{
+            this.jampping = 0;
+        }
+        if(this.jampping <= 0){
+            this.jampping = 0;
+        }
     }
     dash(sw){
         if(sw){
@@ -715,6 +712,7 @@ const interval_game = () => {
     // ### chain block ####
     let front_view_x = FIELD_WIDTH;
     Object.values(ccdm.players).forEach((player) => {
+        // movement
         const movement = player.movement;
         if(movement.forward){
             player.move(server_conf.move_speed);
@@ -736,6 +734,10 @@ const interval_game = () => {
         }
         if(movement.down){
         }
+
+        // frame
+        player.frame();
+
         if(front_view_x < player.view_x + FIELD_WIDTH){
             front_view_x = player.view_x + FIELD_WIDTH;
         }
