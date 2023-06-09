@@ -242,6 +242,35 @@ class Player extends GameObject{
         });
     }
     frame(){
+        // movement
+        if(this.movement.forward){
+            this.move(server_conf.move_speed);
+        }
+        if(this.movement.back){
+            this.move(-server_conf.move_speed);
+        }
+        if(this.movement.left){
+            this.angle = Math.PI * 1;
+            this.direction = 'l';
+            this.move(server_conf.move_speed);
+        }
+        if(this.movement.right){
+            this.angle = Math.PI * 0;
+            this.direction = 'r';
+            this.move(server_conf.move_speed);
+        }
+        if(this.movement.up){
+        }
+        if(this.movement.down){
+        }
+
+        // dash
+        if(this.movement.dash){
+            this.dash(true);
+        }else{
+            this.dash(false);
+        }
+
         if(!this.cmd_his || this.cmd_his.length != CMD_HIS){ return }
         if(this.cmd_his[CMD_HIS - 1].jump){
             this.jump();
@@ -705,9 +734,6 @@ io.on('connection', function(socket) {
         // player.jump();
         player.command({jump:true});
     });
-    socket.on('dash', function(sw){
-        player.dash(sw);
-    });
     socket.on('disconnect', () => {
         if(!player){return;}
         delete ccdm.players[player.id];
@@ -721,34 +747,6 @@ const interval_game = () => {
     // ### chain block ####
     let front_view_x = FIELD_WIDTH;
     Object.values(ccdm.players).forEach((player) => {
-        // movement
-        const movement = player.movement;
-        if(movement.forward){
-            player.move(server_conf.move_speed);
-        }
-        if(movement.back){
-            player.move(-server_conf.move_speed);
-        }
-        if(movement.left){
-            player.angle = Math.PI * 1;
-            player.direction = 'l';
-            player.move(server_conf.move_speed);
-        }
-        if(movement.right){
-            player.angle = Math.PI * 0;
-            player.direction = 'r';
-            player.move(server_conf.move_speed);
-        }
-        if(movement.up){
-        }
-        if(movement.down){
-        }
-        if(movement.dash){
-            player.dash(true);
-        }else{
-            player.dash(false);
-        }
-
         // frame
         player.frame();
 
