@@ -67,6 +67,7 @@ $(document).on('keydown keyup', (event) => {
         'ArrowLeft': 'left',
         'ArrowRight': 'right',
         'b': 'dash',
+        ' ': 'jump',
     };
     const command = KeyToCommand[event.key];
     if(command){
@@ -77,9 +78,10 @@ $(document).on('keydown keyup', (event) => {
         }
         socket.emit('movement', movement);
     }
-    if(event.key === ' ' && event.type === 'keydown'){
-        socket.emit('jump');
-    }
+    // if(event.key === ' ' && event.type === 'keydown'){
+    //     // socket.emit('jump');
+    //     movement['jump'] = true;
+    // }
 });
 
 function drawImage(ctt, img, px, py=null, pw=null, ph=null){

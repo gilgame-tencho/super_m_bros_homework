@@ -236,43 +236,50 @@ class Player extends GameObject{
             this.cmd_his.push({});
         }
     }
-    command(param={}){
-        Object.keys(param).forEach((key)=>{
-            this.cmd_his[CMD_HIS - 1][key] = true;
-        });
+    command(param){
+        this.movement = param;
+        if(param){
+            // Object.assign(this.cmd_his[CMD_HIS - 1], param);
+            // Object.keys(param).forEach((key)=>{
+            //     this.cmd_his[CMD_HIS - 1][key] = true;
+            // });
+        }
+        // return this.cmd_his[CMD_HIS - 1];
     }
     frame(){
+        // let command = this.command();
+        let command = this.movement;
+        console.log(this.cmd_his);
         // movement
-        if(this.movement.forward){
+        if(command.forward){
             this.move(server_conf.move_speed);
         }
-        if(this.movement.back){
+        if(command.back){
             this.move(-server_conf.move_speed);
         }
-        if(this.movement.left){
+        if(command.left){
             this.angle = Math.PI * 1;
             this.direction = 'l';
             this.move(server_conf.move_speed);
         }
-        if(this.movement.right){
+        if(command.right){
             this.angle = Math.PI * 0;
             this.direction = 'r';
             this.move(server_conf.move_speed);
         }
-        if(this.movement.up){
+        if(command.up){
         }
-        if(this.movement.down){
+        if(command.down){
         }
 
         // dash
-        if(this.movement.dash){
+        if(command.dash){
             this.dash(true);
         }else{
             this.dash(false);
         }
 
-        if(!this.cmd_his || this.cmd_his.length != CMD_HIS){ return }
-        if(this.cmd_his[CMD_HIS - 1].jump){
+        if(command.jump){
             this.jump();
         }
         if(this.jampping > 0){
@@ -280,7 +287,9 @@ class Player extends GameObject{
         }else{
             this.fall(server_conf.fall_speed);
         }
-        this.cmd_his.push({});
+
+        // command reflesh.
+        this.cmd_his.push(command);
         if(this.cmd_his.length > CMD_HIS){
             this.cmd_his.shift();
         }
@@ -727,8 +736,9 @@ io.on('connection', function(socket) {
         ccdm.players[player.id] = player;
     });
     socket.on('movement', function(movement) {
-        if(!player || player.health===0){return;}
+        // if(!player || player.health===0){return;}
         player.movement = movement;
+        player.command(movement);
     });
     socket.on('jump', function(){
         // player.jump();
