@@ -29,6 +29,7 @@ const DEAD_END = FIELD_HEIGHT + BLK * 3;
 const MAX_HEIGHT = FIELD_HEIGHT / BLK - 1;
 const MAX_WIDTH = FIELD_WIDTH / BLK;
 const CENTER = server_conf.CENTER;
+const CMD_HIS = 5;
 
 const logger = STANDERD.logger({
     server_name: SERVER_NAME,
@@ -230,12 +231,29 @@ class Player extends GameObject{
         this.direction = 'r';  // direction is right:r, left:l;
         this.jampping = 0;
         this.flg_fly = true;
+        this.cmd_his = []; //command history. FIFO.
+        for(let i=0; i<CMD_HIS; i++){
+            this.cmd_his.push({});
+        }
+    }
+    command(param={}){
+        Object.keys(param).forEach((key)=>{
+            this.cmd_his[CMD_HIS - 1][key] = true;
+        });
     }
     frame(){
+        if(!this.cmd_his || this.cmd_his.length != CMD_HIS){ return }
+        if(this.cmd_his[CMD_HIS - 1].jump){
+            this.jump();
+        }
         if(this.jampping > 0){
             this.hopping();
         }else{
             this.fall(server_conf.fall_speed);
+        }
+        this.cmd_his.push({});
+        if(this.cmd_his.length > CMD_HIS){
+            this.cmd_his.shift();
         }
     }
     collistion(oldX, oldY, oldViewX=this.view_x){
@@ -681,10 +699,14 @@ io.on('connection', function(socket) {
     });
     socket.on('movement', function(movement) {
         if(!player || player.health===0){return;}
+        let t = Date.now();
+        logger.debug(`call move: ${t}`);
+        console.log(movement);
         player.movement = movement;
     });
     socket.on('jump', function(){
-        player.jump();
+        // player.jump();
+        player.command({jump:true});
     });
     socket.on('dash', function(sw){
         player.dash(sw);
