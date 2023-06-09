@@ -699,9 +699,6 @@ io.on('connection', function(socket) {
     });
     socket.on('movement', function(movement) {
         if(!player || player.health===0){return;}
-        let t = Date.now();
-        logger.debug(`call move: ${t}`);
-        console.log(movement);
         player.movement = movement;
     });
     socket.on('jump', function(){
