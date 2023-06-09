@@ -443,6 +443,7 @@ class Enemy extends Player{
                 this.angle = Math.PI * 1;
             }
         }
+        this.fall(server_conf.fall_speed);
     }
     move(distance){
 
