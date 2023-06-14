@@ -21,173 +21,175 @@ const FIELD_WIDTH = server_conf.FIELD_WIDTH;
 const FIELD_HEIGHT = server_conf.FIELD_HEIGHT;
 const FPS = server_conf.FPS;
 
+const GM = require('./static/gameClass.js');
+
 const logger = STANDERD.logger({
     server_name: SERVER_NAME,
     log_level: server_conf.loglevel,
     name: this.constructor.name,
 });
 
-class ClientCommonDataManager{
-    constructor(obj={}){
-        this.id = Math.floor(Math.random()*1000000000);
-    }
-    toJSON(){
-        return {
-            id: this.id,
-        };
-    }
-}
-class CCDM extends ClientCommonDataManager{
-    constructor(obj={}){
-        super(obj);
-        this.players = {};
-    }
-    toJSON(){
-        return Object.assign(super.toJSON(), {
-            players: this.players,
-        });
-    }
-}
+// class ClientCommonDataManager{
+//     constructor(obj={}){
+//         this.id = Math.floor(Math.random()*1000000000);
+//     }
+//     toJSON(){
+//         return {
+//             id: this.id,
+//         };
+//     }
+// }
+// class CCDM extends ClientCommonDataManager{
+//     constructor(obj={}){
+//         super(obj);
+//         this.players = {};
+//     }
+//     toJSON(){
+//         return Object.assign(super.toJSON(), {
+//             players: this.players,
+//         });
+//     }
+// }
 
-class OriginObject{
-    constructor(obj={}){
-        this.id = Math.floor(Math.random()*1000000000);
-        this.logger = STANDERD.logger({
-            server_name: SERVER_NAME,
-            log_level: server_conf.loglevel,
-            name: this.constructor.name,
-        });
-    }
-    toJSON(){
-        return {
-            id: this.id,
-            x: this.x,
-            y: this.y,
-            width: this.width,
-            height: this.height,
-        };
-    }
-}
-class PhysicsObject extends OriginObject{
-    constructor(obj={}){
-        super(obj);
-        this.x = obj.x;
-        this.y = obj.y;
-        this.width = obj.width;
-        this.height = obj.height;
-    }
-    toJSON(){
-        return Object.assign(super.toJSON(), {
-            x: this.x,
-            y: this.y,
-            width: this.width,
-            height: this.height,
-        });
-    }
-}
-class GeneralObject extends OriginObject{
-    constructor(obj={}){
-        super(obj);
-        this.name = obj.name;
-    }
-    toJSON(){
-        return Object.assign(super.toJSON(), {
-            name: this.name,
-        });
-    }
-}
-class GameObject extends PhysicsObject{
-    constructor(obj={}){
-        super(obj);
-        this.angle = obj.angle;
-        this.direction = obj.direction;
-    }
-    move(distance){
-        const oldX = this.x, oldY = this.y;
+// class OriginObject{
+//     constructor(obj={}){
+//         this.id = Math.floor(Math.random()*1000000000);
+//         this.logger = STANDERD.logger({
+//             server_name: SERVER_NAME,
+//             log_level: server_conf.loglevel,
+//             name: this.constructor.name,
+//         });
+//     }
+//     toJSON(){
+//         return {
+//             id: this.id,
+//             x: this.x,
+//             y: this.y,
+//             width: this.width,
+//             height: this.height,
+//         };
+//     }
+// }
+// class PhysicsObject extends OriginObject{
+//     constructor(obj={}){
+//         super(obj);
+//         this.x = obj.x;
+//         this.y = obj.y;
+//         this.width = obj.width;
+//         this.height = obj.height;
+//     }
+//     toJSON(){
+//         return Object.assign(super.toJSON(), {
+//             x: this.x,
+//             y: this.y,
+//             width: this.width,
+//             height: this.height,
+//         });
+//     }
+// }
+// class GeneralObject extends OriginObject{
+//     constructor(obj={}){
+//         super(obj);
+//         this.name = obj.name;
+//     }
+//     toJSON(){
+//         return Object.assign(super.toJSON(), {
+//             name: this.name,
+//         });
+//     }
+// }
+// class GameObject extends PhysicsObject{
+//     constructor(obj={}){
+//         super(obj);
+//         this.angle = obj.angle;
+//         this.direction = obj.direction;
+//     }
+//     move(distance){
+//         const oldX = this.x, oldY = this.y;
 
-        this.x += distance * Math.cos(this.angle);
-        this.y += distance * Math.sin(this.angle);
+//         this.x += distance * Math.cos(this.angle);
+//         this.y += distance * Math.sin(this.angle);
 
-        let collision = false;
-        if(this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
-            collision = true;
-        }
-        if(collision){
-            this.x = oldX; this.y = oldY;
-        }
-        return !collision;
-    }
-    intersect(obj){
-        return (this.x <= obj.x + obj.width) &&
-            (this.x + this.width >= obj.x) &&
-            (this.y <= obj.y + obj.height) &&
-            (this.y + this.height >= obj.y);
-    }
-    toJSON(){
-        return Object.assign(super.toJSON(), {
-            angle: this.angle,
-            direction: this.direction,
-        });
-    }
-}
+//         let collision = false;
+//         if(this.x < 0 || this.x + this.width >= FIELD_WIDTH || this.y < 0 || this.y + this.height >= FIELD_HEIGHT){
+//             collision = true;
+//         }
+//         if(collision){
+//             this.x = oldX; this.y = oldY;
+//         }
+//         return !collision;
+//     }
+//     intersect(obj){
+//         return (this.x <= obj.x + obj.width) &&
+//             (this.x + this.width >= obj.x) &&
+//             (this.y <= obj.y + obj.height) &&
+//             (this.y + this.height >= obj.y);
+//     }
+//     toJSON(){
+//         return Object.assign(super.toJSON(), {
+//             angle: this.angle,
+//             direction: this.direction,
+//         });
+//     }
+// }
 
-class Player extends GameObject{
-    constructor(obj={}){
-        super(obj);
-        this.socketId = obj.socketId;
-        this.nickname = obj.nickname;
-        this.player_type = 'player';
+// class Player extends GameObject{
+//     constructor(obj={}){
+//         super(obj);
+//         this.socketId = obj.socketId;
+//         this.nickname = obj.nickname;
+//         this.player_type = 'player';
 
-        this.movement = {};
+//         this.movement = {};
 
-        this.width = 16;
-        this.height = 16;
-        this.x = FIELD_WIDTH * 0.5 - this.width;
-        this.y = FIELD_HEIGHT * 0.5 - this.height;
-        this.angle = 0;
-        this.direction = 0;  // direction is right:0, left:1;
-    }
-    remove(){
-        delete players[this.id];
-        io.to(this.socketId).emit('dead');
-    }
-    toJSON(){
-        return Object.assign(super.toJSON(), {
-            socketId: this.socketId,
-            nickname: this.nickname,
-            player_type: this.player_type
-        });
-    }
-}
+//         this.width = 16;
+//         this.height = 16;
+//         this.x = FIELD_WIDTH * 0.5 - this.width;
+//         this.y = FIELD_HEIGHT * 0.5 - this.height;
+//         this.angle = 0;
+//         this.direction = 0;  // direction is right:0, left:1;
+//     }
+//     remove(){
+//         delete players[this.id];
+//         io.to(this.socketId).emit('dead');
+//     }
+//     toJSON(){
+//         return Object.assign(super.toJSON(), {
+//             socketId: this.socketId,
+//             nickname: this.nickname,
+//             player_type: this.player_type
+//         });
+//     }
+// }
 
-// ### ---
-class GameMaster{
-    constructor(){
-        this.start();
-    }
-    start(){
-    }
-}
+// // ### ---
+// class GameMaster{
+//     constructor(){
+//         this.start();
+//     }
+//     start(){
+//     }
+// }
 
 // init block. -----------------------------
-const ccdm = new CCDM();
-const gameMtr = new GameMaster();
+const ccdm = new GM.CCDM();
+const gameMtr = new GM.GameMaster();
 
 io.on('connection', function(socket) {
     let player = null;
     socket.on('game-start', (config) => {
         console.log(`gameStart`);
-        player = new Player({
+        player = new GM.Player({
             socketId: socket.id,
             nickname: config.nickname,
         });
         ccdm.players[player.id] = player;
         io.sockets.emit('new-player', player);
     });
-    socket.on('movement', function(movement) {
-        if(!player || player.health===0){return;}
-        player.movement = movement;
-    });
+    // socket.on('movement', function(movement) {
+    //     if(!player || player.health===0){return;}
+    //     player.movement = movement;
+    // });
     socket.on('disconnect', () => {
         if(!player){return;}
         delete ccdm.players[player.id];
@@ -221,7 +223,7 @@ const interval_game = () => {
 }
 
 function start_interval_game(){
-    setInterval(interval_game, 1000/1);
+    // setInterval(interval_game, 1000/1);
     // setInterval(interval_game, 1000/FPS);
 }
 

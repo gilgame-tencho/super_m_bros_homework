@@ -13,6 +13,11 @@ images.player = $('#player-image')[0];
 images.bg = {
     feald: $('#map')[0],
 }
+const SERVER_NAME = 'main';
+const FIELD_WIDTH = 256;
+const FIELD_HEIGHT = 240;
+const FPS = 60;
+const move_score = 10;
 
 
 class ClientCommonDataManager{
@@ -158,11 +163,6 @@ class GameMaster{
 
 let my_player;
 let movement = {};
-const SERVER_NAME = 'main';
-const FIELD_WIDTH = 256;
-const FIELD_HEIGHT = 240;
-const FPS = 30;
-const move_score = 10;
 
 const ccdm = new CCDM();
 const gameMtr = new GameMaster();
@@ -283,7 +283,7 @@ socket.on('new-player', function(param) {
     });
     ccdm.players[my_player.id] = my_player;
     if(!start_flg){
-        setInterval(interval_game, 1000/30);
+        setInterval(interval_game, 1000/FPS);
     }
 });
 // $("#start-button").on('click', gameStart);
