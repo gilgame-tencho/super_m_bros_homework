@@ -134,3 +134,4 @@ package-lock.json
 
 # ignore config.
 conf/server_conf.yml
+conf/server_config.yml

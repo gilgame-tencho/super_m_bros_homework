@@ -48,41 +48,13 @@ images.goal = {
     pole: $('#img-goal-pole')[0],
 }
 
-const MY_USER_ID = Math.floor(Math.random()*1000000000);
-function gameStart(){
-    socket.emit('game-start', {
-        nickname: $("#nickname").val(),
-        userid: MY_USER_ID,
-    });
-    $("#start-screen").hide();
-}
-$("#start-button").on('click', gameStart);
-gameStart();
-
+let my_player;
 let movement = {};
-$(document).on('keydown keyup', (event) => {
-    const KeyToCommand = {
-        'ArrowUp': 'up',
-        'ArrowDown': 'down',
-        'ArrowLeft': 'left',
-        'ArrowRight': 'right',
-        'b': 'dash',
-        ' ': 'jump',
-    };
-    const command = KeyToCommand[event.key];
-    if(command){
-        if(event.type === 'keydown'){
-            movement[command] = true;
-        }else{ /* keyup */
-            movement[command] = false;
-        }
-        socket.emit('movement', movement);
-    }
-    // if(event.key === ' ' && event.type === 'keydown'){
-    //     // socket.emit('jump');
-    //     movement['jump'] = true;
-    // }
-});
+
+// const ccdm = new CCDM();
+// const gameMtr = new GameMaster();
+
+const MY_USER_ID = Math.floor(Math.random()*1000000000);
 
 function drawImage(ctt, img, px, py=null, pw=null, ph=null){
     let x; let y; let w; let h;
@@ -140,7 +112,6 @@ function is_draw(obj, MARGIN, FIELD_WIDTH){
 view_reset_all();
 
 // -- timer --------
-const FPS = 30;
 socket.on('timer_sync', function(param) {
     console.log(`this.timer: ${timer},\tserver.timer:${param.timer}. timer is reset.`);
     timer = 0;
@@ -176,11 +147,14 @@ const effects = {
 };
 
 // -- server action --------
-socket.on('back-frame', function(ccdm) {
+socket.on('back-frame', function() {
     view_reset_background();
 });
 
-socket.on('menu-frame', function(ccdm) {
+socket.on('menu-frame', function() {
+});
+
+const menu_frame = () => {
     view_reset_front();
     if(!ccdm.players[MY_USER_ID]){ return }
 
@@ -197,9 +171,10 @@ socket.on('menu-frame', function(ccdm) {
     cotxFT.fillText(mymenu.time_title.v, mymenu.time_title.x, mymenu.time_title.y);
     cotxFT.fillText(mymenu.time.v, mymenu.time.x, mymenu.time.y);
     cotxFT.restore();
-});
+}
 
-socket.on('state', function(ccdm) {
+// socket.on('state', function(ccdm) {
+const draw_view = function(){
     view_reset_middle();
     const MARGIN = ccdm.conf.BLK * 3;
     let VIEW_X = 0;
@@ -299,6 +274,7 @@ socket.on('state', function(ccdm) {
         }
     });
     let goal = ccdm.goal;
+    if(!goal){ return }
     goal.x = goal.x - VIEW_X;
     if(is_draw(goal, MARGIN, ccdm.conf.FIELD_WIDTH)){
         let param = {
@@ -317,6 +293,136 @@ socket.on('state', function(ccdm) {
         }
         param.y += ccdm.conf.BLK;
         drawImage(cotxMD, images.piece.normal, param);
+    }
+}
+
+const main_frame = () => {
+    // ### chain block ####
+    let front_view_x = FIELD_WIDTH;
+    Object.values(ccdm.players).forEach((player) => {
+        // frame
+        player.frame();
+
+        if(front_view_x < player.view_x + FIELD_WIDTH){
+            front_view_x = player.view_x + FIELD_WIDTH;
+        }
+    });
+    Object.values(ccdm.enemys).forEach((enemy)=>{
+        if(enemy.x < front_view_x){
+            enemy.sleep = false;
+        }
+        if(enemy.sleep){ return }
+
+        enemy.self_move();
+        Object.values(ccdm.players).forEach((player)=>{
+            if(enemy.intersect(player)){
+                player.respone();
+            }
+        });
+    });
+    // Object.values(ccdm.players).forEach((player) => {
+    //     const movement = player.movement;
+    //     if(movement.forward){
+    //         player.move(move_score);
+    //     }
+    //     if(movement.back){
+    //         player.move(-move_score);
+    //     }
+    //     if(movement.left){
+    //         player.angle = Math.PI * 1;
+    //         player.move(move_score);
+    //     }
+    //     if(movement.right){
+    //         player.angle = Math.PI * 0;
+    //         player.move(move_score);
+    //     }
+    //     if(movement.up){
+    //     }
+    //     if(movement.down){
+    //     }
+    // });
+    // ### calculate ####
+    let pieces = Object.assign({}, ccdm.blocks, ccdm.items);
+    Object.values(pieces).forEach((piece)=>{
+        if(!piece.effect || !piece.touched){
+            return
+        }
+        if(piece.effect == 'coin'){
+            logger.debug(`is coin.`);
+            console.log(piece);
+            ccdm.players[piece.touched].menu.coin.v++;
+        }
+        if(piece.effect == 'mushroom'){
+            logger.debug(`is mushroom.`);
+            console.log(piece);
+            let param = {
+                x: piece.x,
+                y: piece.y - BLK,
+            }
+            let item = new mushroomItem(param);
+            ccdm.items[item.id] = item;
+        }
+    });
+    // ### send after ####
+    Object.values(ccdm.blocks).forEach((block)=>{
+        if(block.bounding && block.touched){
+            block.touched = null;
+        }
+    });
+}
+
+let start_flg = false;
+
+const interval_game = () => {
+    start_flg = true;
+    main_frame();
+    draw_view();
+    menu_frame();
+}
+
+function gameStart(){
+    console.log(`gameStart`);
+    socket.emit('game-start', {
+        nickname: $("#nickname").val(),
+        userid: MY_USER_ID,
+    });
+}
+
+socket.on('new-player', function(param) {
+    console.log(`call new-player`);
+    $("#start-screen").hide();
+    my_player = new Player({
+        socketId: param.socketId,
+        nickname: param.nickname,
+        id: param.id,
+        END_POINT: param.END_POINT,
+        x: param.x,
+        y: param.y,
+    });
+    ccdm.players[my_player.id] = my_player;
+    if(!start_flg){
+        setInterval(interval_game, 1000/FPS);
+    }
+});
+// $("#start-button").on('click', gameStart);
+
+gameStart();
+
+$(document).on('keydown keyup', (event) => {
+    const KeyToCommand = {
+        'ArrowUp': 'up',
+        'ArrowDown': 'down',
+        'ArrowLeft': 'left',
+        'ArrowRight': 'right',
+    };
+    const command = KeyToCommand[event.key];
+    if(command){
+        if(event.type === 'keydown'){
+            movement[command] = true;
+        }else{ /* keyup */
+            movement[command] = false;
+        }
+        my_player.movement = movement;
     }
 });
 
