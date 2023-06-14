@@ -14,12 +14,22 @@ const yaml = require('yaml');
 const STANDERD = require('./game_modules/standerd_modules.js');
 const DB = require('./game_modules/database_modules.js');
 
-const server_conf = yaml.parse(fs.readFileSync(__dirname + '/conf/server_conf.yml', 'utf-8'));
+const server_conf = Object.assign(
+    yaml.parse(fs.readFileSync(__dirname + '/conf/server_conf.yml', 'utf-8')),
+    yaml.parse(fs.readFileSync(__dirname + '/conf/apl_conf.yml', 'utf-8')),
+);
 
 const SERVER_NAME = 'main';
 const FIELD_WIDTH = server_conf.FIELD_WIDTH;
 const FIELD_HEIGHT = server_conf.FIELD_HEIGHT;
 const FPS = server_conf.FPS;
+const BLK = server_conf.BLOCK;
+const DEAD_LINE = FIELD_HEIGHT + BLK * 1;
+const DEAD_END = FIELD_HEIGHT + BLK * 3;
+const MAX_HEIGHT = FIELD_HEIGHT / BLK - 1;
+const MAX_WIDTH = FIELD_WIDTH / BLK;
+const CENTER = server_conf.CENTER;
+const CMD_HIS = 5;
 
 const GM = require('./gameClass.js');
 
@@ -30,8 +40,8 @@ const logger = STANDERD.logger({
 });
 
 // init block. -----------------------------
-const ccdm = new GM.CCDM();
-const gameMtr = new GM.GameMaster();
+const ccdm = GM.ccdm;
+const gameMtr = GM.gameMtr;
 
 io.on('connection', function(socket) {
     let player = null;
@@ -40,6 +50,10 @@ io.on('connection', function(socket) {
         player = new GM.Player({
             socketId: socket.id,
             nickname: config.nickname,
+            id: config.id,
+            END_POINT: ccdm.stage.END_POINT,
+            x: BLK * 2,
+            y: FIELD_HEIGHT * 0.5,
         });
         ccdm.players[player.id] = player;
         io.sockets.emit('new-player', player);
@@ -66,4 +80,6 @@ app.get('/', (request, response) => {
 
 server.listen(server_conf.port, function() {
   logger.info(`Starting server on port ${server_conf.port}`);
+  logger.info(`Server conf`);
+  console.log(server_conf);
 });
