@@ -27,7 +27,6 @@ const logger = STANDERD.logger({
     name: this.constructor.name,
 });
 
-
 class ClientCommonDataManager{
     constructor(obj={}){
         this.id = Math.floor(Math.random()*1000000000);
@@ -177,11 +176,13 @@ const gameMtr = new GameMaster();
 io.on('connection', function(socket) {
     let player = null;
     socket.on('game-start', (config) => {
+        console.log(`gameStart`);
         player = new Player({
             socketId: socket.id,
             nickname: config.nickname,
         });
         ccdm.players[player.id] = player;
+        io.sockets.emit('new-player', player);
     });
     socket.on('movement', function(movement) {
         if(!player || player.health===0){return;}
@@ -216,11 +217,12 @@ const interval_game = () => {
         if(movement.down){
         }
     });
-    io.sockets.emit('state', ccdm);
+    // io.sockets.emit('state', ccdm);
 }
 
 function start_interval_game(){
-    setInterval(interval_game, 1000/FPS);
+    setInterval(interval_game, 1000/1);
+    // setInterval(interval_game, 1000/FPS);
 }
 
 // Server config. -----------
