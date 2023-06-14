@@ -112,11 +112,7 @@ function is_draw(obj, MARGIN, FIELD_WIDTH){
 view_reset_all();
 
 // -- timer --------
-socket.on('timer_sync', function(param) {
-    console.log(`this.timer: ${timer},\tserver.timer:${param.timer}. timer is reset.`);
-    timer = 0;
-});
-const self_timer = () => {
+const switch_animetion = () => {
     // animation --------------------
     // hatena
     let hatena = ['hatena_f1', 'hatena_f2', 'hatena_f3', 'hatena_f4', 'hatena_f3', 'hatena_f2',];
@@ -138,7 +134,7 @@ const self_timer = () => {
 
     timer++;
 }
-setInterval(self_timer, 1000/FPS);
+// setInterval(self_timer, 1000/FPS);
 
 // -- action param ---------
 const effects = {
@@ -320,27 +316,6 @@ const main_frame = () => {
             }
         });
     });
-    // Object.values(ccdm.players).forEach((player) => {
-    //     const movement = player.movement;
-    //     if(movement.forward){
-    //         player.move(move_score);
-    //     }
-    //     if(movement.back){
-    //         player.move(-move_score);
-    //     }
-    //     if(movement.left){
-    //         player.angle = Math.PI * 1;
-    //         player.move(move_score);
-    //     }
-    //     if(movement.right){
-    //         player.angle = Math.PI * 0;
-    //         player.move(move_score);
-    //     }
-    //     if(movement.up){
-    //     }
-    //     if(movement.down){
-    //     }
-    // });
     // ### calculate ####
     let pieces = Object.assign({}, ccdm.blocks, ccdm.items);
     Object.values(pieces).forEach((piece)=>{
@@ -375,6 +350,7 @@ let start_flg = false;
 
 const interval_game = () => {
     start_flg = true;
+    switch_animetion();
     main_frame();
     draw_view();
     menu_frame();
