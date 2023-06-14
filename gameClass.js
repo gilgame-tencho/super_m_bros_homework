@@ -145,3 +145,8 @@ class GameMaster{
     start(){
     }
 }
+module.exports = {
+    CCDM, CCDM,
+    Player: Player,
+    GameMaster: GameMaster,
+}
