@@ -30,6 +30,7 @@ const MAX_HEIGHT = FIELD_HEIGHT / BLK - 1;
 const MAX_WIDTH = FIELD_WIDTH / BLK;
 const CENTER = server_conf.CENTER;
 const CMD_HIS = 5;
+const MARGIN = BLK * 3;
 
 const CONF = {
     SERVER_NAME: SERVER_NAME,
@@ -43,6 +44,7 @@ const CONF = {
     MAX_WIDTH: MAX_WIDTH,
     CENTER: CENTER,
     CMD_HIS: CMD_HIS,
+    MARGIN: MARGIN,
 }
 Object.keys(server_conf).forEach((key)=>{
     if(CONF[key]){ return }

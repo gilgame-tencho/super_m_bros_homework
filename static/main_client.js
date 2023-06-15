@@ -349,7 +349,7 @@ const interval_game = () => {
     switch_animetion();
     main_frame();
     draw_view();
-    menu_frame();
+    // menu_frame();
 }
 
 function gameStart(){
@@ -373,6 +373,7 @@ socket.on('new-player', function(param) {
     });
     ccdm.players[my_player.id] = my_player;
     if(!start_flg){
+        console.log("start interval");
         setInterval(interval_game, 1000/CONF.FPS);
     }
 });
