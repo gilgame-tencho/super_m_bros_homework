@@ -319,12 +319,12 @@ const main_frame = () => {
             return
         }
         if(piece.effect == 'coin'){
-            logger.debug(`is coin.`);
+            console.log(`is coin.`);
             console.log(piece);
             ccdm.players[piece.touched].menu.coin.v++;
         }
         if(piece.effect == 'mushroom'){
-            logger.debug(`is mushroom.`);
+            console.log(`is mushroom.`);
             console.log(piece);
             let param = {
                 x: piece.x,
@@ -354,11 +354,18 @@ const interval_game = () => {
 
 function gameStart(){
     console.log(`gameStart`);
+    socket.emit('load-stage', { area: 1, stage: 1});
+}
+
+socket.on('load-stage', function(param) {
+    console.log("called load-stage");
+    ccdm.stage.set_stage(param);
+    gameMtr.create_stage(ccdm);
     socket.emit('game-start', {
         nickname: $("#nickname").val(),
-        userid: MY_USER_ID,
+        id: MY_USER_ID,
     });
-}
+});
 
 socket.on('new-player', function(param) {
     console.log(`call new-player`);
@@ -367,7 +374,7 @@ socket.on('new-player', function(param) {
         socketId: param.socketId,
         nickname: param.nickname,
         id: param.id,
-        END_POINT: param.END_POINT,
+        END_POINT: ccdm.stage.END_POINT,
         x: param.x,
         y: param.y,
     });

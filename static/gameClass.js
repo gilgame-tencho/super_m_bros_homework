@@ -1,24 +1,5 @@
 console.log("Load gameClass");
 
-console.log(CONF);
-console.log("CONF test");
-
-// const SERVER_NAME = 'main';
-// const FIELD_WIDTH = 256;
-// const FIELD_HEIGHT = 240;
-// const FPS = 60;
-// const move_speed = 4;
-// const fall_speed = 8;
-// const jamp_speed = 8;
-// const jamp_power = 5;
-// const BLK = 16;
-// const DEAD_LINE = FIELD_HEIGHT + BLK * 1;
-// const DEAD_END = FIELD_HEIGHT + BLK * 3;
-// const MAX_HEIGHT = FIELD_HEIGHT / BLK - 1;
-// const MAX_WIDTH = FIELD_WIDTH / BLK;
-// const CENTER = 8;
-// const CMD_HIS = 5;
-
 class ClientCommonDataManager{
     constructor(obj={}){
         this.id = Math.floor(Math.random()*1000000000);
@@ -398,7 +379,7 @@ class Enemy extends Player{
     self_move(){
         if(this.sleep){ return }
 
-        let speed = Math.floor(move_speed / 3);
+        let speed = Math.floor(CONF.move_speed / 3);
         if(!this.move(speed)){
             if(this.direction == 'l'){
                 this.direction = 'r';
@@ -408,7 +389,7 @@ class Enemy extends Player{
                 this.angle = Math.PI * 1;
             }
         }
-        this.fall(fall_speed);
+        this.fall(CONF.fall_speed);
     }
     move(distance){
 
@@ -420,7 +401,6 @@ class Enemy extends Player{
         this.y += dis_y;
 
         let collision = this.collistion(oldX, oldY);
-        // logger.debug(`Enemy is move! collision:${collision}`);
 
         return !collision;
     }
@@ -570,7 +550,11 @@ class Stage extends GeneralObject{
         // height min 14, width min 16
         // mark{ 'b':hardblock '.': nothing 'n':normalblock}
         // this.map = this.load_stage();
-        this.map = this.def();
+        this.def();
+        this.END_POINT = this.map.length * CONF.BLK;
+    }
+    set_stage(st){
+        this.map = st;
         this.END_POINT = this.map.length * CONF.BLK;
     }
     def(){
@@ -585,7 +569,7 @@ class Stage extends GeneralObject{
                 }
             }
         }
-        return st;
+        this.map = st;
     }
     load_stage(){
         // let stage = fs.readFileSync(__dirname + '/conf/stages/s1.txt', 'utf-8');
@@ -634,11 +618,11 @@ class Stage extends GeneralObject{
 // ### ---
 class GameMaster{
     constructor(){
-        this.create_stage();
+        this.create_stage(ccdm);
         console.log("game master.");
         // console.log(ccdm.stage.load_stage());
     }
-    create_stage(){
+    create_stage(ccdm){
         let x = 0;
         let y = 0;
         let goal_flg = false;
