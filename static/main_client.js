@@ -51,10 +51,8 @@ images.goal = {
 let my_player;
 let movement = {};
 
-// const ccdm = new CCDM();
-// const gameMtr = new GameMaster();
-
 const MY_USER_ID = Math.floor(Math.random()*1000000000);
+const MARGIN = CONF.BLK * 3;
 
 function drawImage(ctt, img, px, py=null, pw=null, ph=null){
     let x; let y; let w; let h;
@@ -104,8 +102,8 @@ function debug_show_object_line(cotx, obj){
     cotx.restore();
 }
 
-function is_draw(obj, MARGIN, FIELD_WIDTH){
-    return (-MARGIN < obj.x && obj.x < FIELD_WIDTH + MARGIN)
+function is_draw(obj){
+    return (-CONF.MARGIN < obj.x && obj.x < CONF.FIELD_WIDTH + CONF.MARGIN)
 }
 
 // init -----
@@ -168,11 +166,9 @@ const menu_frame = () => {
     cotxFT.fillText(mymenu.time.v, mymenu.time.x, mymenu.time.y);
     cotxFT.restore();
 }
-
 // socket.on('state', function(ccdm) {
 const draw_view = function(){
     view_reset_middle();
-    const MARGIN = ccdm.conf.BLK * 3;
     let VIEW_X = 0;
     if(ccdm.players[MY_USER_ID]){
         VIEW_X = ccdm.players[MY_USER_ID].view_x;
@@ -245,7 +241,7 @@ const draw_view = function(){
         if(piece.sleep){
             return
         }
-        if(is_draw(param, MARGIN, ccdm.conf.FIELD_WIDTH)){
+        if(is_draw(param)){
             drawImage(cotxMD, images.piece[piece.type], param);
         }
     });
@@ -257,7 +253,7 @@ const draw_view = function(){
             width: player.width,
             height: player.height,
         }
-        if(is_draw(param, MARGIN, ccdm.conf.FIELD_WIDTH)){
+        if(is_draw(param)){
             drawImage(cotxMD, img, param);
             // debug_show_object_line(cotxMD, player);
 
@@ -272,7 +268,7 @@ const draw_view = function(){
     let goal = ccdm.goal;
     if(!goal){ return }
     goal.x = goal.x - VIEW_X;
-    if(is_draw(goal, MARGIN, ccdm.conf.FIELD_WIDTH)){
+    if(is_draw(goal)){
         let param = {
             x: goal.x,
             y: goal.y,
@@ -281,26 +277,26 @@ const draw_view = function(){
         }
         drawImage(cotxMD, images.goal.top, param);
         for(let i=0; i<goal.pole; i++){
-            param.y += ccdm.conf.BLK;
+            param.y += CONF.BLK;
             drawImage(cotxMD, images.goal.pole, param);
             if(i==0){
                 drawImage(cotxMD, images.goal.flag, param);
             }
         }
-        param.y += ccdm.conf.BLK;
+        param.y += CONF.BLK;
         drawImage(cotxMD, images.piece.normal, param);
     }
 }
 
 const main_frame = () => {
     // ### chain block ####
-    let front_view_x = FIELD_WIDTH;
+    let front_view_x = CONF.FIELD_WIDTH;
     Object.values(ccdm.players).forEach((player) => {
         // frame
         player.frame();
 
-        if(front_view_x < player.view_x + FIELD_WIDTH){
-            front_view_x = player.view_x + FIELD_WIDTH;
+        if(front_view_x < player.view_x + CONF.FIELD_WIDTH){
+            front_view_x = player.view_x + CONF.FIELD_WIDTH;
         }
     });
     Object.values(ccdm.enemys).forEach((enemy)=>{
@@ -332,7 +328,7 @@ const main_frame = () => {
             console.log(piece);
             let param = {
                 x: piece.x,
-                y: piece.y - BLK,
+                y: piece.y - CONF.BLK,
             }
             let item = new mushroomItem(param);
             ccdm.items[item.id] = item;
@@ -377,7 +373,7 @@ socket.on('new-player', function(param) {
     });
     ccdm.players[my_player.id] = my_player;
     if(!start_flg){
-        setInterval(interval_game, 1000/FPS);
+        setInterval(interval_game, 1000/CONF.FPS);
     }
 });
 // $("#start-button").on('click', gameStart);

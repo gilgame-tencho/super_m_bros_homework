@@ -31,7 +31,26 @@ const MAX_WIDTH = FIELD_WIDTH / BLK;
 const CENTER = server_conf.CENTER;
 const CMD_HIS = 5;
 
+const CONF = {
+    SERVER_NAME: SERVER_NAME,
+    FIELD_WIDTH: FIELD_WIDTH,
+    FIELD_HEIGHT: FIELD_HEIGHT,
+    FPS: FPS,
+    BLK: BLK,
+    DEAD_LINE: DEAD_LINE,
+    DEAD_END: DEAD_END,
+    MAX_HEIGHT: MAX_HEIGHT,
+    MAX_WIDTH: MAX_WIDTH,
+    CENTER: CENTER,
+    CMD_HIS: CMD_HIS,
+}
+Object.keys(server_conf).forEach((key)=>{
+    if(CONF[key]){ return }
+    CONF[key] = server_conf[key];
+});
+
 const GM = require('./gameClass.js');
+const { log } = require('console');
 
 const logger = STANDERD.logger({
     server_name: SERVER_NAME,
@@ -44,6 +63,11 @@ const ccdm = GM.ccdm;
 const gameMtr = GM.gameMtr;
 
 io.on('connection', function(socket) {
+    socket.on('init', (config) => {
+        logger.info("init call.");
+        io.sockets.emit('init', CONF);
+    });
+
     let player = null;
     socket.on('game-start', (config) => {
         console.log(`gameStart`);
@@ -75,6 +99,7 @@ const app_param = {
 app.get('/', (request, response) => {
     app_param.name = request.param('name');
     app_param.title = 'bros';
+    app_param.conf = CONF;
     response.render(path.join(__dirname, '/static/index.ejs'), app_param);
 });
 

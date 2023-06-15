@@ -5,18 +5,40 @@ const yaml = require('yaml');
 const STANDERD = require('./game_modules/standerd_modules.js');
 const DB = require('./game_modules/database_modules.js');
 
+const server_conf = Object.assign(
+    yaml.parse(fs.readFileSync(__dirname + '/conf/server_conf.yml', 'utf-8')),
+    yaml.parse(fs.readFileSync(__dirname + '/conf/apl_conf.yml', 'utf-8')),
+);
+
 const SERVER_NAME = 'main';
-const FIELD_WIDTH = 256;
-const FIELD_HEIGHT = 240;
-const FPS = 60;
-const move_score = 10;
-const BLK = 16;
+const FIELD_WIDTH = server_conf.FIELD_WIDTH;
+const FIELD_HEIGHT = server_conf.FIELD_HEIGHT;
+const FPS = server_conf.FPS;
+const BLK = server_conf.BLOCK;
 const DEAD_LINE = FIELD_HEIGHT + BLK * 1;
 const DEAD_END = FIELD_HEIGHT + BLK * 3;
 const MAX_HEIGHT = FIELD_HEIGHT / BLK - 1;
 const MAX_WIDTH = FIELD_WIDTH / BLK;
-const CENTER = 8;
+const CENTER = server_conf.CENTER;
 const CMD_HIS = 5;
+
+const CONF = {
+    SERVER_NAME: SERVER_NAME,
+    FIELD_WIDTH: FIELD_WIDTH,
+    FIELD_HEIGHT: FIELD_HEIGHT,
+    FPS: FPS,
+    BLK: BLK,
+    DEAD_LINE: DEAD_LINE,
+    DEAD_END: DEAD_END,
+    MAX_HEIGHT: MAX_HEIGHT,
+    MAX_WIDTH: MAX_WIDTH,
+    CENTER: CENTER,
+    CMD_HIS: CMD_HIS,
+}
+Object.keys(server_conf).forEach((key)=>{
+    if(CONF[key]){ return }
+    CONF[key] = server_conf[key];
+});
 
 const logger = STANDERD.logger({
     server_name: SERVER_NAME,
