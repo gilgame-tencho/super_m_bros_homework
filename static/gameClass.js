@@ -328,17 +328,17 @@ class Player extends GameObject{
     jump(){
         if(this.jampping <= 0 && !this.flg_fly && this.jump_count == 0){
             this.flg_fly = true;
-            this.jampping = 2 * BLK;
+            this.jampping = 2 * CONF.BLK;
             this.jump_count = 1;
         }else if( this.jump_count == 1){
             this.jump_count = 2;
         }else if( this.jump_count == 2){
-            this.jampping += 1.5 * BLK;
+            this.jampping += 1.5 * CONF.BLK;
             this.jump_count = 3;
         }else if( this.jump_count == 3){
             this.jump_count = 4;
         }else if( this.jump_count == 4){
-            this.jampping += 1.5 * BLK;
+            this.jampping += 1.5 * CONF.BLK;
             this.jump_count = 5;
         }else{
             this.jump_count = 0;
